@@ -6,180 +6,28 @@ from typing import Dict, Any
 # 添加项目根目录到Python路径
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-# 导入我们的闪卡生成和验证功能
+# 导入fastmcp的服务
+from fastmcp import FastMCP
+
+# 导入闪卡生成和验证功能
 from src.handlers.card_generator import generate_flashcards
 from src.utils.pdf_generator import generate_flashcards_pdf
 from src.utils.json_validator import validate_json_structure, normalize_json_data
 
-# 尝试导入fastmcp模块
-try:
-    import fastmcp
-    from fastmcp import MCPServer, MCPTool
-    from fastmcp.models import MCPRequest, MCPResponse
-    HAS_FASTMCP = True
-except ImportError:
-    print("警告: 未找到fastmcp模块。请运行 'pip install -r requirements.txt' 安装所需依赖。")
+# 创建 FastMCP 服务器实例
+mcp = FastMCP("闪卡生成MCP服务器")
+
+@mcp.tool()
+def generate_flashcard(flashcard_data: dict) -> Dict[str, Any]:
+    """根据JSON数据生成闪卡HTML页面
     
-    # 创建模拟类以便代码可以继续运行
-    class MCPRequest:
-        def __init__(self, params=None):
-            self.params = params or {}
-    
-    class MCPResponse:
-        def __init__(self, data=None):
-            self.data = data or {}
-    
-    class MCPTool:
-        def __init__(self, name, description, input_schema):
-            self.name = name
-            self.description = description
-            self.input_schema = input_schema
+    Args:
+        flashcard_data: 闪卡数据的JSON对象，包含metadata、style和cards字段
         
-        def handle(self, func):
-            return func
-    
-    class MCPServer:
-        def __init__(self):
-            self.tools = {}
-        
-        def register_tool(self, tool):
-            self.tools[tool.name] = tool
-        
-        def get_registered_tools(self):
-            return self.tools.keys()
-        
-        def run(self, host='127.0.0.1', port=8000, debug=True):
-            print(f"模拟运行服务器在 {host}:{port}")
-            print("请注意：由于缺少fastmcp模块，服务器不会真正启动。")
-    
-    HAS_FASTMCP = False
-
-class FlashcardMCPServer(MCPServer):
-    """闪卡生成MCP服务器"""
-    
-    def __init__(self):
-        """初始化MCP服务器"""
-        super().__init__()
-        
-        # 注册工具
-        self.register_tool(generate_flashcard_tool)
-        self.register_tool(validate_flashcard_data_tool)
-        self.register_tool(list_flashcard_templates_tool)
-        self.register_tool(export_flashcards_pdf_tool)
-    
-    def on_start(self):
-        """服务器启动时执行"""
-        print("闪卡生成MCP服务器已启动")
-        print("可用工具:")
-        for tool_name in self.get_registered_tools():
-            print(f"- {tool_name}")
-
-# 创建工具实例
-generate_flashcard_tool = MCPTool(
-    name="generate_flashcard",
-    description="根据JSON数据生成闪卡HTML页面",
-    input_schema={
-        "type": "object",
-        "properties": {
-            "flashcard_data": {
-                "type": "object",
-                "description": "闪卡数据的JSON对象",
-                "properties": {
-                    "metadata": {
-                        "type": "object",
-                        "description": "闪卡集的元数据",
-                        "properties": {
-                            "title": {"type": "string"},
-                            "description": {"type": "string"}
-                        }
-                    },
-                    "style": {
-                        "type": "object",
-                        "description": "闪卡的样式配置",
-                        "properties": {
-                            "template": {"type": "string", "default": "default"},
-                            "theme": {"type": "string"},
-                            "colors": {"type": "object"},
-                            "font": {"type": "string"}
-                        }
-                    },
-                    "cards": {
-                        "type": "array",
-                        "description": "闪卡列表",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "front": {"type": "string"},
-                                "back": {"type": "string"},
-                                "tags": {"type": "array", "items": {"type": "string"}}
-                            },
-                            "required": ["front", "back"]
-                        }
-                    }
-                },
-                "required": ["cards"]
-            }
-        },
-        "required": ["flashcard_data"]
-    }
-)
-
-validate_flashcard_data_tool = MCPTool(
-    name="validate_flashcard_data",
-    description="验证闪卡数据的有效性",
-    input_schema={
-        "type": "object",
-        "properties": {
-            "flashcard_data": {
-                "type": "object",
-                "description": "需要验证的闪卡数据"
-            }
-        },
-        "required": ["flashcard_data"]
-    }
-)
-
-list_flashcard_templates_tool = MCPTool(
-    name="list_flashcard_templates",
-    description="列出可用的闪卡模板",
-    input_schema={"type": "object"}
-)
-
-# 导出 PDF 的工具定义
-export_flashcards_pdf_tool = MCPTool(
-    name="export_flashcards_pdf",
-    description="根据现有闪卡数据导出正反两面的PDF",
-    input_schema={
-        "type": "object",
-        "properties": {
-            "flashcard_data": {
-                "type": "object",
-                "description": "闪卡数据的JSON对象（与生成HTML所用结构一致）"
-            },
-            "layout": {
-                "type": "string",
-                "description": "打印布局：'single' 单张/页 或 'a4_8' 每页八张",
-                "enum": ["single", "a4_8"],
-                "default": "a4_8"
-            },
-            "filename": {
-                "type": "string",
-                "description": "导出的PDF文件名",
-                "default": "flashcards.pdf"
-            }
-        },
-        "required": ["flashcard_data"]
-    }
-)
-
-# 工具处理函数
-@generate_flashcard_tool.handle
-def handle_generate_flashcard(request: MCPRequest) -> Dict[str, Any]:
-    """处理闪卡生成请求"""
+    Returns:
+        包含生成结果的字典，包括success状态、html_content和message
+    """
     try:
-        # 获取闪卡数据
-        flashcard_data = request.params.get("flashcard_data", {})
-        
         # 生成闪卡HTML
         html_content = generate_flashcards(flashcard_data)
         
@@ -197,13 +45,17 @@ def handle_generate_flashcard(request: MCPRequest) -> Dict[str, Any]:
             "message": "闪卡生成失败"
         }
 
-@validate_flashcard_data_tool.handle
-def handle_validate_flashcard_data(request: MCPRequest) -> Dict[str, Any]:
-    """处理闪卡数据验证请求"""
-    try:
-        # 获取闪卡数据
-        flashcard_data = request.params.get("flashcard_data", {})
+@mcp.tool()
+def validate_flashcard_data(flashcard_data: dict) -> Dict[str, Any]:
+    """验证闪卡数据的有效性
+    
+    Args:
+        flashcard_data: 需要验证的闪卡数据
         
+    Returns:
+        包含验证结果的字典，包括success状态、normalized_data和message
+    """
+    try:
         # 验证数据结构
         validate_json_structure(flashcard_data)
         
@@ -225,9 +77,13 @@ def handle_validate_flashcard_data(request: MCPRequest) -> Dict[str, Any]:
             "message": "闪卡数据验证失败"
         }
 
-@list_flashcard_templates_tool.handle
-def handle_list_flashcard_templates(request: MCPRequest) -> Dict[str, Any]:
-    """处理列出闪卡模板请求"""
+@mcp.tool()
+def list_flashcard_templates() -> Dict[str, Any]:
+    """列出可用的闪卡模板
+    
+    Returns:
+        包含可用模板列表的字典
+    """
     try:
         # 导入配置
         from config import FLASHCARD_CONFIG
@@ -258,16 +114,19 @@ def handle_list_flashcard_templates(request: MCPRequest) -> Dict[str, Any]:
             "message": "模板列表获取失败"
         }
 
-# 工具处理函数：导出 PDF
-@export_flashcards_pdf_tool.handle
-def handle_export_flashcards_pdf(request: MCPRequest) -> Dict[str, Any]:
-    """处理将闪卡导出为正反两面PDF的请求"""
+@mcp.tool()
+def export_flashcards_pdf(flashcard_data: dict, layout: str = "a4_8", filename: str = "flashcards.pdf") -> Dict[str, Any]:
+    """根据现有闪卡数据导出正反两面的PDF
+    
+    Args:
+        flashcard_data: 闪卡数据的JSON对象（与生成HTML所用结构一致）
+        layout: 打印布局，'single' 单张/页 或 'a4_8' 每页八张
+        filename: 导出的PDF文件名
+        
+    Returns:
+        包含PDF导出结果的字典
+    """
     try:
-        # 获取闪卡数据与文件名
-        flashcard_data = request.params.get("flashcard_data", {})
-        filename = request.params.get("filename", "flashcards.pdf")
-        layout = request.params.get("layout", "a4_8")
-
         # 验证并规范化数据
         validate_json_structure(flashcard_data)
         normalized_data = normalize_json_data(flashcard_data)
@@ -294,17 +153,17 @@ def handle_export_flashcards_pdf(request: MCPRequest) -> Dict[str, Any]:
 # 导入配置
 from config import SERVER_CONFIG
 
-# 创建并运行MCP服务器
+# 运行服务器
 if __name__ == "__main__":
-    # 初始化MCP服务器
-    server = FlashcardMCPServer()
+    print("闪卡生成MCP服务器已启动")
+    print("可用工具:")
+    print("- generate_flashcard: 根据JSON数据生成闪卡HTML页面")
+    print("- validate_flashcard_data: 验证闪卡数据的有效性")
+    print("- list_flashcard_templates: 列出可用的闪卡模板")
+    print("- export_flashcards_pdf: 导出闪卡为PDF格式")
     
-    # 运行服务器
-    server.run(
-        host=SERVER_CONFIG.get('host', '127.0.0.1'),
-        port=SERVER_CONFIG.get('port', 8000),
-        debug=SERVER_CONFIG.get('debug', True)
-    )
+    # 使用 FastMCP 的标准运行方式
+    mcp.run()
 
 # 示例用法
 def create_sample_flashcards():

@@ -2,7 +2,7 @@ import json
 import re
 from typing import List, Dict, Any, Optional
 from datetime import datetime
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class Card(BaseModel):
@@ -11,7 +11,7 @@ class Card(BaseModel):
     back: str = Field(..., min_length=1)
     tags: List[str] = Field(default_factory=list)
     
-    @validator('front', 'back', pre=True)
+    @field_validator('front', 'back', mode='before')
     def check_empty_string(cls, v):
         if isinstance(v, str) and not v.strip():
             raise ValueError('字符串不能为空或只包含空白字符')
@@ -31,7 +31,7 @@ class Style(BaseModel):
     colors: Dict[str, Any] = Field(default_factory=dict)
     font: str = "Arial, sans-serif"
     
-    @validator('theme')
+    @field_validator('theme')
     def validate_theme(cls, v):
         valid_themes = ['light', 'dark', 'custom']
         if v not in valid_themes:
@@ -44,7 +44,7 @@ class FlashcardData(BaseModel):
     metadata: Optional[Metadata] = Field(default_factory=Metadata)
     style: Optional[Style] = Field(default_factory=Style)
     
-    @validator('cards')
+    @field_validator('cards')
     def check_cards_not_empty(cls, v):
         if not v:
             raise ValueError('闪卡列表不能为空')

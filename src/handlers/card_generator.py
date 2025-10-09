@@ -1,5 +1,5 @@
-from utils.json_validator import validate_json_structure, normalize_json_data
-from utils.markdown_parser import MarkdownParser
+from src.utils.json_validator import validate_json_structure, normalize_json_data
+from ..utils.markdown_parser import MarkdownParser
 import os
 from config import FLASHCARD_CONFIG
 try:

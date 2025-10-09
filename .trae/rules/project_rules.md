@@ -2,3 +2,4 @@
 - output as Chinese;
 - Do not add any function that not mentioned;
 - Run all the taks step by steps;
+- Reading github tools OR official documents, before using unfamiliar package/library.

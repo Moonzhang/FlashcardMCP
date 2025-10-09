@@ -6,7 +6,6 @@ PDF生成器模块
 import os
 import asyncio
 from pathlib import Path
-from typing import Optional
 from jinja2 import Environment, FileSystemLoader
 from playwright.async_api import async_playwright
 
