@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{title}</title>
+    <meta name="description" content="{description}">
+    <style>
+        :root {
+            --primary-color: {primary_color};
+            --secondary-color: {secondary_color};
+            --background-color: {background_color};
+            --text-color: {text_color};
+            --card-front-bg: {card_front_bg};
+            --card-back-bg: {card_back_bg};
+            --card-border: {card_border};
+            --font-family: {font_family};
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: var(--font-family); background: var(--background-color); color: var(--text-color); padding: 16px; }
+
+        .flashcard-grid { display: block; }
+
+        /* 单卡视图，A4 八分之一竖版尺寸：74.25mm x 105mm */
+        .card { width: 74.25mm; height: 105mm; perspective: 1000px; cursor: pointer; position: relative; margin: 0 auto 12mm; display: none; }
+        .card.active { display: block; }
+        .card.flipped .card-inner { transform: rotateY(180deg); }
+        .card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.08); }
+
+        .card-front, .card-back {
+            position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+            padding: 16px; border: 1px solid var(--card-border); border-radius: 8px; display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .card-front { background: var(--card-front-bg); }
+        .card-back { transform: rotateY(180deg); background: var(--card-back-bg); }
+
+        .deck-name { position: absolute; top: 8px; left: 8px; font-size: 0.75em; font-weight: 500; color: var(--text-color); opacity: 0.7; pointer-events: none; z-index: 10; }
+        .card-content { max-height: 100%; overflow: auto; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; text-align: center; gap: 8px; }
+        /* 反面内容上下居中，并留出上边框空间 */
+        .card-back { justify-content: center; align-items: center; padding-top: 24px; }
+        .card-back .card-content { width: 100%; max-width: 90%; margin: 0 auto; align-items: flex-start; text-align: left; }
+        .card-content img { display: block; max-width: 100%; max-height: 60%; height: auto; width: auto; object-fit: contain; margin-bottom: 4px; }
+        .card-content p, .card-content ul, .card-content ol, .card-content blockquote { margin: 4px 0 0; }
+        /* 列表样式：确保显示项目符号与序号，并提供缩进 */
+        .card-content ul { list-style-type: disc; list-style-position: outside; padding-left: 1.25em; margin-left: 0.25em; }
+        .card-content ol { list-style-type: decimal; list-style-position: outside; padding-left: 1.25em; margin-left: 0.25em; }
+        .card-content li { margin: 3px 0; }
+        /* 隐藏标签显示 */
+        .card-tags, .card-tag { display: none !important; }
+
+        /* 表格边框样式 */
+        .card-content table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+        .card-content th, .card-content td { border: 1px solid var(--card-border); padding: 6px 8px; text-align: left; }
+        .card-content thead th { background: rgba(0,0,0,0.06); }
+
+        @media print {
+            body { padding: 0; }
+            .card { break-inside: avoid; page-break-inside: avoid; }
+            .card-inner { transform: none !important; box-shadow: none; }
+            .card-front, .card-back { position: relative; border: 1px solid #000; }
+            .card-back { border: 2px solid #000; }
+        }
+    </style>
+</head>
+<body>
+    <div class="flashcard-grid" id="cardGrid">
+        {cards_html}
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const cards = Array.from(document.querySelectorAll('.card'))
+        let currentIndex = 0
+
+        function showOnlyIndex(index) {
+            const total = cards.length
+            currentIndex = ((index % total) + total) % total
+            cards.forEach((card, i) => {
+                if (i === currentIndex) {
+                    card.style.display = 'block'
+                    card.classList.add('active')
+                } else {
+                    card.style.display = 'none'
+                    card.classList.remove('active')
+                }
+            })
+        }
+
+        // 初始显示第一张
+        showOnlyIndex(0)
+
+        // 点击翻转
+        cards.forEach(card => {
+            card.addEventListener('click', () => card.classList.toggle('flipped'))
+        })
+
+        // 键盘导航：左右方向键，空格翻转
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') {
+                showOnlyIndex(currentIndex - 1)
+            } else if (e.key === 'ArrowRight') {
+                showOnlyIndex(currentIndex + 1)
+            } else if (e.key === ' ') {
+                e.preventDefault()
+                const visible = cards[currentIndex]
+                if (visible) visible.classList.toggle('flipped')
+            }
+        })
+
+        // 触屏滑动导航
+        let touchStartX = 0
+        let touchStartY = 0
+        let touchStartTime = 0
+        const grid = document.getElementById('cardGrid')
+        const SWIPE_THRESHOLD = 30 // px
+
+        function onTouchStart(e) {
+            const t = e.touches ? e.touches[0] : e
+            touchStartX = t.clientX
+            touchStartY = t.clientY
+            touchStartTime = Date.now()
+        }
+        function onTouchEnd(e) {
+            const t = e.changedTouches ? e.changedTouches[0] : e
+            const dx = t.clientX - touchStartX
+            const dy = t.clientY - touchStartY
+            const adx = Math.abs(dx)
+            const ady = Math.abs(dy)
+            const isHorizontal = adx > ady && adx > SWIPE_THRESHOLD
+            if (isHorizontal) {
+                if (dx < 0) {
+                    // 左滑 -> 下一张
+                    showOnlyIndex(currentIndex + 1)
+                } else {
+                    // 右滑 -> 上一张
+                    showOnlyIndex(currentIndex - 1)
+                }
+            }
+        }
+        grid.addEventListener('touchstart', onTouchStart, { passive: true })
+        grid.addEventListener('touchend', onTouchEnd, { passive: true })
+        // 支持鼠标拖拽作为滑动替代
+        grid.addEventListener('mousedown', onTouchStart)
+        grid.addEventListener('mouseup', onTouchEnd)
+    })
+    </script>
+</body>
+</html>

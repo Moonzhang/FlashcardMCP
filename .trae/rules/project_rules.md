@@ -1,0 +1,4 @@
+- all the project run and test based on uv  environment;  source .venv/bin/activate
+- output as Chinese;
+- Do not add any function that not mentioned;
+- Run all the taks step by steps;

@@ -1,0 +1,85 @@
+# Python相关
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 虚拟环境
+venv/
+ENV/
+*.venv/
+
+# 日志文件
+logs/
+*.log
+
+# 操作系统相关
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE和编辑器配置
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 测试相关
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# 构建相关
+build/
+dist/
+*.egg-info/
+
+# 环境变量配置
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# 其他临时文件
+*.tmp
+*.temp
+.cache/
+
+# 输出文件
+output/
+results/
+
+# 数据库文件
+*.db
+*.sqlite3
+
+# 大型二进制文件
+*.pdf
+*.zip
+*.tar.gz
+*.tar
+
+# 敏感信息
+*.key
+*.pem
+*.cert
+credentials.json
+
+# 特殊文件
+*.md~  # 备份的Markdown文件
+*.html~  # 备份的HTML文件
+
+# 自定义排除
+.flaskenv
+.python-version
+
+# 确保不忽略模板文件和配置文件（除非明确需要）
+!src/templates/
+!config.py
+!requirements.txt

@@ -1,0 +1,184 @@
+{
+  "basic_test": {
+    "title": "基础测试闪卡集",
+    "description": "这是一个用于基础功能测试的闪卡集",
+    "cards": [
+      {
+        "front": "什么是 MCP?",
+        "back": "MCP 是一种模块化的计算协议，用于构建可组合的服务和应用。"
+      },
+      {
+        "front": "FastMCP 的主要特点是什么?",
+        "back": "FastMCP 是一个快速、轻量级的 MCP 框架，支持异步处理、路由配置和中间件功能。"
+      },
+      {
+        "front": "如何安装 FastMCP?",
+        "back": "可以通过 pip 安装: pip install fastmcp"
+      }
+    ]
+  },
+  "markdown_test": {
+    "title": "Markdown 格式测试闪卡集",
+    "description": "这个闪卡集包含各种 Markdown 格式的内容",
+    "cards": [
+      {
+        "front": "# Markdown 标题",
+        "back": "# 这是一级标题\n## 这是二级标题\n### 这是三级标题"
+      },
+      {
+        "front": "**Markdown 文本格式化**",
+        "back": "这是**粗体**文本，这是*斜体*文本，这是***粗斜体***文本。\n\n这是~~删除线~~文本。"
+      },
+      {
+        "front": "Markdown 列表",
+        "back": "### 无序列表\n- 项目 1\n- 项目 2\n- 项目 3\n\n### 有序列表\n1. 第一项\n2. 第二项\n3. 第三项"
+      },
+      {
+        "front": "Markdown 代码",
+        "back": "```python\n # 这是 Python 代码示例\ndef hello():\n    print('Hello, World!')\n\nhello()\n```\n\n这是行内代码: `print('Hello')`"
+      },
+      {
+        "front": "Markdown 表格",
+        "back": "| 名称 | 描述 | 数量 |\n|------|------|------|\n| 项目1 | 第一个项目 | 10 |\n| 项目2 | 第二个项目 | 20 |\n| 项目3 | 第三个项目 | 30 |"
+      },
+      {
+        "front": "Markdown 链接和图片",
+        "back": "这是一个[链接示例](https://baike.baidu.com/item/%E6%B4%9B%E5%BF%85%E8%BE%BE%E6%B3%95%E5%88%99/7646700)\n\n![图片示例](https://pics3.baidu.com/feed/8435e5dde71190efb7ebdcd672a00f06fcfa60f7.jpeg)"
+      }
+    ]
+  },
+  "style_test": {
+    "title": "样式测试闪卡集",
+    "description": "测试不同样式配置的闪卡集",
+    "cards": [
+      {
+        "front": "什么是样式配置?",
+        "back": "样式配置允许您自定义闪卡页面的外观，包括主题、字体和颜色。",
+        "tags": ["样式", "配置"]
+      },
+      {
+        "front": "有哪些可用的主题?",
+        "back": "目前支持的主题有: light (浅色主题)、dark (深色主题) 和 custom (自定义主题)。",
+        "tags": ["主题", "UI"]
+      }
+    ],
+    "style": {
+      "theme": "dark",
+      "font": "'Microsoft YaHei', sans-serif",
+      "colors": {
+        "primary": "#00bcd4",
+        "secondary": "#ff9800",
+        "background": "1a1a1a",
+        "text": "ffffff",
+        "card_bg": "2d2d2d",
+        "card_border": "444444"
+      }
+    },
+    "metadata": {
+      "version": "1.0.0",
+      "author": "测试用户",
+      "created_at": "2023-01-01T12:00:00Z",
+      "last_updated": "2023-01-02T15:30:00Z"
+    }
+  },
+  "tags_test": {
+    "title": "标签测试闪卡集",
+    "description": "这个闪卡集包含带有各种标签的卡片，用于测试筛选功能",
+    "cards": [
+      {
+        "front": "什么是 Python?",
+        "back": "Python 是一种高级、解释型的编程语言。",
+        "tags": ["编程", "Python", "语言"]
+      },
+      {
+        "front": "什么是 JavaScript?",
+        "back": "JavaScript 是一种用于网页开发的脚本语言。",
+        "tags": ["编程", "JavaScript", "前端", "语言"]
+      },
+      {
+        "front": "什么是 React?",
+        "back": "React 是一个用于构建用户界面的 JavaScript 库。",
+        "tags": ["编程", "JavaScript", "React", "前端", "框架"]
+      },
+      {
+        "front": "什么是 Flask?",
+        "back": "Flask 是一个轻量级的 Python Web 框架。",
+        "tags": ["编程", "Python", "Flask", "后端", "框架"]
+      },
+      {
+        "front": "什么是 SQL?",
+        "back": "SQL 是用于管理关系型数据库的标准语言。",
+        "tags": ["编程", "数据库", "SQL"]
+      }
+    ]
+  },
+  "minimal_test": {
+    "title": "最小化测试",
+    "cards": [
+      {
+        "front": "最小化测试问题",
+        "back": "最小化测试答案"
+      }
+    ]
+  }
+  ,
+  "fill_blank_test": {
+    "title": "填空题测试",
+    "description": "包含填空题类型的卡片",
+    "cards": [
+      {
+        "front": "Python 是一种 ____ 语言",
+        "back": "Python 是一种 高级 编程 语言",
+        "tags": ["填空", "基础"]
+      },
+      {
+        "front": "HTTP 的默认端口是 ____",
+        "back": "HTTP 的默认端口是 80",
+        "tags": ["填空", "网络"]
+      }
+    ]
+  },
+  "image_title_test": {
+    "title": "图片与标题测试",
+    "description": "包含图片与标题的卡片",
+    "cards": [
+      {
+        "front": "# 计算机结构图\n![计算机示意图](https://pic2.zhimg.com/v2-a0c6671db3d599c2cd558df58f8eb6cf_1440w.jpg)",
+        "back": "计算机由 CPU、内存、输入输出设备组成。",
+        "tags": ["图片", "标题"]
+      },
+      {
+        "front": "## 网络拓扑图\n![网络拓扑](https://oss-liuchengtu.hudunsoft.com/bgmuisc/168318813651703.png)",
+        "back": "常见拓扑包含星型、总线型、环型等。",
+        "tags": ["图片", "网络"]
+      }
+    ]
+  },
+  "table_test": {
+    "title": "表格测试",
+    "description": "包含表格内容的卡片",
+    "cards": [
+      {
+        "front": "### 数据表\n| 列 | 值 |\n|---|---|\n| A | 1 |\n| B | 2 |\n| C | 3 |",
+        "back": "该表展示简单的键值对",
+        "tags": ["表格", "Markdown"]
+      }
+    ]
+  },
+  "japanese_ruby_test": {
+    "title": "日文语法与注音测试",
+    "description": "包含日文与对应中文解释，日文显示 ruby 注音",
+    "cards": [
+      {
+        "front": "<ruby>学校<rt>がっこう</rt></ruby> に <ruby>行<rt>い</rt></ruby>きます",
+        "back": "我去学校。解释：日语句子中的助词に表示方向。",
+        "tags": ["日文", "语法", "RUBY"]
+      },
+      {
+        "front": "<ruby>食<rt>た</rt></ruby>べます は <ruby>敬語<rt>けいご</rt></ruby> です",
+        "back": "“食べます”是敬语形式。",
+        "tags": ["日文", "敬语", "RUBY"]
+      }
+    ]
+  }
+}

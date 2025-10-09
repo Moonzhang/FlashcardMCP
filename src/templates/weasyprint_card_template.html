@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 20mm;
+        }
+        
+        body {
+            font-family: "PingFang SC", "Microsoft YaHei", "SimHei", sans-serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        
+        .card-container {
+            page-break-inside: avoid;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            background: white;
+        }
+        
+        .card-container.single-page {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            page-break-after: always;
+        }
+        
+        .card-front {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            color: #333;
+        }
+        
+        .card-back {
+            font-size: 20px;
+            color: #555;
+            line-height: 1.8;
+        }
+        
+        .card-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: repeat(4, 1fr);
+            gap: 10px;
+            height: 100vh;
+            page-break-after: always;
+        }
+        
+        .card-grid .card-container {
+            height: auto;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .card-grid .card-front {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .card-grid .card-back {
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        
+        .card-number {
+            font-size: 10px;
+            color: #999;
+            margin-bottom: 5px;
+        }
+        
+        /* Markdown 样式 */
+        h1, h2, h3, h4, h5, h6 {
+            margin: 10px 0;
+            color: #333;
+        }
+        
+        h1 { font-size: 24px; }
+        h2 { font-size: 20px; }
+        h3 { font-size: 18px; }
+        h4 { font-size: 16px; }
+        h5 { font-size: 14px; }
+        h6 { font-size: 12px; }
+        
+        p {
+            margin: 8px 0;
+        }
+        
+        ul, ol {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+        
+        li {
+            margin: 4px 0;
+        }
+        
+        code {
+            background: #f5f5f5;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: "Monaco", "Consolas", monospace;
+            font-size: 0.9em;
+        }
+        
+        pre {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-family: "Monaco", "Consolas", monospace;
+            font-size: 0.85em;
+        }
+        
+        blockquote {
+            border-left: 4px solid #ddd;
+            margin: 10px 0;
+            padding-left: 15px;
+            color: #666;
+        }
+        
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 10px 0;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: #f5f5f5;
+            font-weight: bold;
+        }
+        
+        strong {
+            font-weight: bold;
+        }
+        
+        em {
+            font-style: italic;
+        }
+        
+        del {
+            text-decoration: line-through;
+        }
+        
+        /* Ruby 注音支持 */
+        ruby {
+            ruby-align: center;
+        }
+        
+        rt {
+            font-size: 0.7em;
+            color: #666;
+        }
+        
+        /* 图片样式 */
+        img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
+        
+        /* 链接样式 */
+        a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    {% if layout == 'single' %}
+        {% for card in cards %}
+            <div class="card-container single-page">
+                <div class="card-front">{{ card.front | safe }}</div>
+            </div>
+            <div class="card-container single-page">
+                <div class="card-back">{{ card.back | safe }}</div>
+            </div>
+        {% endfor %}
+    {% else %}
+        {% for page_cards in cards | batch(8) %}
+            <div class="card-grid">
+                {% for card in page_cards %}
+                    <div class="card-container">
+                        <div class="card-number">卡片 {{ loop.index + (loop.previtem | length if loop.previtem else 0) }}</div>
+                        <div class="card-front">{{ card.front | safe }}</div>
+                        <div class="card-back">{{ card.back | safe }}</div>
+                    </div>
+                {% endfor %}
+                {% for i in range(8 - page_cards | length) %}
+                    <div class="card-container"></div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+    {% endif %}
+</body>
+</html>

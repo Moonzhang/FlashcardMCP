@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ title }}</title>
+  <style>
+    :root {
+      --primary-color: {{ primary_color }};
+      --secondary-color: {{ secondary_color }};
+      --background-color: {{ background_color }};
+      --text-color: {{ text_color }};
+      --card-bg: {{ card_bg }};
+      --card-border: {{ card_border }};
+      --font-family: {{ font_family }};
+    }
+    body {
+      font-family: var(--font-family);
+      background: var(--background-color);
+      color: var(--text-color);
+      margin: 0; padding: 24px;
+    }
+    .header { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .title { font-size: 24px; font-weight: 600; }
+    .controls { display: flex; gap: 8px; align-items: center; }
+    .search-input { padding: 8px 12px; border: 1px solid var(--card-border); border-radius: 6px; }
+    .export-btn { padding: 8px 12px; border: none; border-radius: 6px; background: var(--primary-color); color: #fff; cursor: pointer; }
+    .export-btn:hover { opacity: 0.9; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; margin-top: 16px; }
+    .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; padding: 12px; }
+    .card .front, .card .back { margin-bottom: 8px; }
+    .filter-container { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+    .filter-btn { padding: 6px 10px; border: 1px solid var(--card-border); border-radius: 999px; background: #fff; cursor: pointer; }
+    .filter-btn.active { background: var(--secondary-color); color: #fff; border-color: var(--secondary-color); }
+    .stats { margin-top: 8px; color: #666; }
+    
+    /* 打印优化 */
+    @media print {
+      .controls, .filter-container, #searchContainer { display: none !important; }
+      .card { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body data-theme="{{ theme }}">
+  <div class="header">
+    <div class="title">{{ title }}</div>
+    <div id="searchContainer">
+      <input id="searchInput" class="search-input" type="text" placeholder="搜索问题/答案/标签" />
+    </div>
+    <div class="controls">
+      <button id="exportPdfBtn" class="export-btn">导出 PDF</button>
+    </div>
+  </div>
+
+  <div class="description">{{ description_section | safe }}</div>
+
+  <div class="stats">共 <span id="totalCards">{{ total_cards }}</span> 张卡片</div>
+
+  {{ filter_section | safe }}
+
+  <div class="cards" id="cardsContainer">
+    {{ cards_html | safe }}
+  </div>
+
+  <script>
+    // 搜索过滤
+    const searchInput = document.getElementById('searchInput');
+    const cardsContainer = document.getElementById('cardsContainer');
+    const totalCardsEl = document.getElementById('totalCards');
+    
+    function applySearch(value) {
+      const q = value.trim().toLowerCase();
+      let visible = 0;
+      for (const cardEl of cardsContainer.children) {
+        const text = cardEl.textContent.toLowerCase();
+        const show = !q || text.includes(q);
+        cardEl.style.display = show ? '' : 'none';
+        if (show) visible++;
+      }
+      totalCardsEl.textContent = visible;
+    }
+    searchInput?.addEventListener('input', (e) => applySearch(e.target.value));
+
+    // 标签过滤
+    const filterContainer = document.getElementById('filterContainer');
+    filterContainer?.addEventListener('click', (e) => {
+      const btn = e.target.closest('.filter-btn');
+      if (!btn) return;
+      filterContainer.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const tag = btn.dataset.tag;
+      let visible = 0;
+      for (const cardEl of cardsContainer.children) {
+        const tags = (cardEl.dataset.tags || '').split(',').map(s => s.trim()).filter(Boolean);
+        const show = tag === 'all' || tags.includes(tag);
+        cardEl.style.display = show ? '' : 'none';
+        if (show) visible++;
+      }
+      totalCardsEl.textContent = visible;
+    });
+
+    // 导出 PDF - 打印
+    const exportBtn = document.getElementById('exportPdfBtn');
+    exportBtn?.addEventListener('click', () => {
+      window.print();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <style>
+        /* 全局样式 */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background-color: white;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        /* 页面容器 */
+        .page {
+            width: 210mm;  /* A4宽度 */
+            height: 297mm; /* A4高度 */
+            margin: 0;
+            padding: 0;
+            page-break-after: always;
+            position: relative;
+        }
+        
+        .page:last-child {
+            page-break-after: avoid;
+        }
+        
+        /* 单页布局：每页一张卡片 - 填充整个页面 */
+        .single-layout {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            padding: 5mm;  /* 最小安全边距 */
+            box-sizing: border-box;
+        }
+        
+        .single-layout .card {
+            width: 200mm;   /* 接近A4宽度 (210mm - 10mm边距) */
+            height: 287mm;  /* 接近A4高度 (297mm - 10mm边距) */
+            border: 2px solid #000;
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            box-sizing: border-box;
+        }
+        
+        .single-layout .card-front,
+        .single-layout .card-back {
+            width: 100%;
+            height: 100%;
+            padding: 25px;  /* 增大内边距适应大卡片 */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 1.5em;  /* 增大字体适应大卡片 */
+        }
+        
+        .single-layout .card-front {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+        }
+        
+        .single-layout .card-back {
+            background: #e9ecef;
+            border: 2px solid #000;
+        }
+        
+        /* A4八卡片布局 - 横版 */
+        .a4-8-layout {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);  /* 4列 */
+            grid-template-rows: repeat(2, 1fr);     /* 2行 */
+            gap: 4mm;
+            padding: 8mm;
+            height: 100%;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .a4-8-layout .card {
+            width: 62mm;   /* 保守计算，确保不超出界限 */
+            height: 85mm;  /* 保守计算，确保不超出界限 */
+            border: 1px solid #000;
+            border-radius: 4px;
+            background: white;
+            position: relative;
+            box-sizing: border-box;
+        }
+        
+        .a4-8-layout .card-side {
+            width: 100%;
+            height: 100%;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            border-radius: 3px;
+            font-size: 10px;
+            line-height: 1.4;
+        }
+        
+        .a4-8-layout .card-front {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+        }
+        
+        .a4-8-layout .card-back {
+            background: #e9ecef;
+            border: 1px solid #000;
+        }
+        
+        /* 卡片内容样式 */
+        .card-content {
+            max-height: 100%;
+            overflow: hidden;
+            width: 100%;
+            word-wrap: break-word;
+        }
+        
+        /* Markdown内容样式 */
+        .card-content h1, .card-content h2, .card-content h3 {
+            font-size: 1.2em;
+            margin: 0.5em 0;
+            color: #2c3e50;
+        }
+        
+        .card-content h1 { font-size: 1.4em; }
+        .card-content h2 { font-size: 1.3em; }
+        .card-content h3 { font-size: 1.2em; }
+        
+        .card-content p {
+            margin: 0.5em 0;
+        }
+        
+        /* 单页布局专用样式 - 大字体 */
+        .single-layout .card-content h1 {
+            font-size: 2.5em;
+            margin: 0.3em 0;
+        }
+        
+        .single-layout .card-content h2 {
+            font-size: 2em;
+            margin: 0.4em 0;
+        }
+        
+        .single-layout .card-content h3 {
+            font-size: 1.7em;
+            margin: 0.4em 0;
+        }
+        
+        .single-layout .card-content p {
+            font-size: 1.3em;
+            line-height: 1.6;
+            margin: 0.8em 0;
+        }
+        
+        .single-layout .card-content .phonetic {
+            font-size: 1.2em;
+            color: #666;
+            margin: 0.5em 0;
+        }
+        
+        .single-layout .card-content code {
+            font-size: 1.1em;
+            padding: 4px 8px;
+        }
+        
+        .single-layout .card-content pre {
+            font-size: 1em;
+            padding: 15px;
+        }
+        
+        .single-layout .card-content ul, .single-layout .card-content ol {
+            font-size: 1.2em;
+            line-height: 1.5;
+        }
+        
+        .single-layout .card-content table {
+            font-size: 1em;
+        }
+        
+        .single-layout .card-content th, .single-layout .card-content td {
+            padding: 8px;
+        }
+        
+        .card-content strong {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .card-content em {
+            font-style: italic;
+        }
+        
+        .card-content code {
+            background: #f1f3f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
+        .card-content pre {
+            background: #f8f9fa;
+            padding: 8px;
+            border-radius: 4px;
+            border-left: 3px solid #007bff;
+            overflow-x: auto;
+            font-size: 0.8em;
+            margin: 0.5em 0;
+        }
+        
+        .card-content ul, .card-content ol {
+            text-align: left;
+            padding-left: 1.5em;
+            margin: 0.5em 0;
+        }
+        
+        .card-content li {
+            margin: 0.2em 0;
+        }
+        
+        .card-content table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8em;
+            margin: 0.5em 0;
+        }
+        
+        .card-content th, .card-content td {
+            border: 1px solid #ddd;
+            padding: 4px;
+            text-align: left;
+        }
+        
+        .card-content th {
+            background: #f8f9fa;
+            font-weight: bold;
+        }
+        
+        .card-content a {
+            color: #007bff;
+            text-decoration: underline;
+        }
+        
+        .card-content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
+        
+        /* 打印样式 */
+        @media print {
+            body {
+                margin: 0;
+                padding: 0;
+            }
+            
+            .page {
+                margin: 0;
+                padding: 0;
+                page-break-after: always;
+            }
+            
+            .page:last-child {
+                page-break-after: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    {% if layout == 'single' %}
+        <!-- 单页布局：每页一张卡片，正反面分别在不同页面 -->
+        {% for card in cards %}
+        <!-- 正面页 -->
+        <div class="page">
+            <div class="single-layout">
+                <div class="card">
+                    <div class="card-front">
+                        <div class="card-content">{{ card.front | safe }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 反面页 -->
+        <div class="page">
+            <div class="single-layout">
+                <div class="card">
+                    <div class="card-back">
+                        <div class="card-content">{{ card.back | safe }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        
+    {% else %}
+        <!-- A4八卡片布局：每页8张卡片的正面 -->
+        {% set cards_per_page = 8 %}
+        {% for page_start in range(0, cards | length, cards_per_page) %}
+        {% set page_cards = cards[page_start:page_start + cards_per_page] %}
+        
+        <!-- 正面页 -->
+        <div class="page">
+            <div class="a4-8-layout">
+                {% for card in page_cards %}
+                <div class="card">
+                    <div class="card-side card-front">
+                        <div class="card-content">{{ card.front | safe }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+                
+                <!-- 填充空白卡片以保持网格布局 -->
+                {% for i in range(cards_per_page - page_cards | length) %}
+                <div class="card">
+                    <div class="card-side card-front"></div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- 反面页（镜像布局，用于双面打印） -->
+        <div class="page">
+            <div class="a4-8-layout">
+                {% for card in page_cards | reverse %}
+                <div class="card">
+                    <div class="card-side card-back">
+                        <div class="card-content">{{ card.back | safe }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+                
+                <!-- 填充空白卡片以保持网格布局 -->
+                {% for i in range(cards_per_page - page_cards | length) %}
+                <div class="card">
+                    <div class="card-side card-back"></div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    {% endif %}
+</body>
+</html>
