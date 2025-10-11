@@ -83,3 +83,7 @@ credentials.json
 !src/templates/
 !config.py
 !requirements.txt
+
+# 新增忽略规则
+tests/
+cov_html/
