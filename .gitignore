@@ -87,3 +87,4 @@ credentials.json
 # 新增忽略规则
 tests/
 cov_html/
+project_docs/
