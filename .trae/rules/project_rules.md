@@ -1,5 +1,7 @@
-- all the project run and test based on uv  environment;  source .venv/bin/activate
-- output as Chinese;
-- Do not add any function that not mentioned;
-- Run all the taks step by steps;
-- Reading github tools OR official documents, before using unfamiliar package/library.
+- All projects run and test based on the uv environment; source .venv/bin/activate
+- Output in Chinese;
+- Do not add any functions that are not mentioned;
+- Run all tasks step by step;
+- Read GitHub tools OR official documentation before using unfamiliar packages/libraries.
+- Use relative imports for modules within the same package; use absolute imports for cross-package references;
+- Path settings and fixed parameter settings should be uniformly configured through config to avoid repeated references in each module.

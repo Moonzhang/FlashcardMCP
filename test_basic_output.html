@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title }}</title>
-    <meta name="description" content="{{ description }}">
+    <title>测试闪卡集</title>
+    <meta name="description" content="这是一个测试用的闪卡集">
     <style>
-        /* theme: {{ theme }} */
-        /* font: {{ font_family }} */
+        /* theme: light */
+        /* font: Arial, sans-serif */
         /* CSS 变量定义 */
         :root {
-            --primary-color: {{ primary_color }};
-            --secondary-color: {{ secondary_color }};
-            --background-color: {{ background_color }};
-            --text-color: {{ text_color }};
-            --card-bg: {{ card_bg }};
-            --card-border: {{ card_border }};
-            --font-family: {{ font_family }};
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --background-color: #ffffff;
+            --text-color: #333333;
+            --card-bg: #ffffff;
+            --card-border: 1px solid #dddddd;
+            --font-family: Arial, sans-serif;
         }
         
         /* 全局样式 */
@@ -201,8 +201,8 @@
 <body>
     <div class="container">
         <header>
-            <h1>{{ title }}</h1>
-            {{ description_section }}
+            <h1>测试闪卡集</h1>
+            <p>这是一个测试用的闪卡集</p>
         </header>
 
         <!-- 控制区：搜索框 -->
@@ -211,12 +211,43 @@
         </div>
 
         <!-- 过滤器按钮占位符 -->
-        {{ filter_section }}
+        
+        <!-- 过滤器 -->
+        <div class="filter-container" id="filterContainer">
+            <button class="filter-btn active" data-tag="all">全部</button><button class="filter-btn" data-tag="FastMCP">FastMCP</button><button class="filter-btn" data-tag="MCP">MCP</button><button class="filter-btn" data-tag="Python">Python</button><button class="filter-btn" data-tag="编程">编程</button>
+        </div>
+        
 
         <main>
             <!-- 闪卡网格 -->
             <div class="flashcard-grid" id="cardGrid">
-                {{ cards_html }}
+                
+        <div class="card" id="card-0" data-tags="编程,Python">
+            <div class="card-inner">
+                <div class="card-front">
+                    <div class="deck-name">测试闪卡集</div>
+                    <div class="card-content"><p>什么是 Python?</p></div>
+                    <div class="card-tags"><span class="card-tag">编程</span><span class="card-tag">Python</span></div>
+                </div>
+                <div class="card-back">
+                    <div class="card-content"><p>Python 是一种高级编程语言，以其简洁的语法和强大的生态系统而闻名。</p></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card" id="card-1" data-tags="MCP,FastMCP">
+            <div class="card-inner">
+                <div class="card-front">
+                    <div class="deck-name">测试闪卡集</div>
+                    <div class="card-content"><p>FastMCP 的主要功能是什么?</p></div>
+                    <div class="card-tags"><span class="card-tag">MCP</span><span class="card-tag">FastMCP</span></div>
+                </div>
+                <div class="card-back">
+                    <div class="card-content"><p>FastMCP 是一个用于构建 MCP 服务的快速开发框架，支持各种处理函数和路由配置。</p></div>
+                </div>
+            </div>
+        </div>
+        
             </div>
         </main>
     </div>

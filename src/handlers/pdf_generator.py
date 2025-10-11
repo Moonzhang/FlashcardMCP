@@ -9,8 +9,8 @@ from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
 from playwright.async_api import async_playwright
 
-from .json_validator import FlashcardData
-from .markdown_parser import MarkdownParser
+from src.utils.json_validator import FlashcardData
+from src.utils.markdown_parser import MarkdownParser
 
 
 def get_template_path() -> str:
@@ -22,8 +22,8 @@ def get_template_path() -> str:
 
 async def generate_flashcards_pdf_async(
     flashcard_data: dict,
-    layout: str = "single"
-) -> bytes:
+    layout: str = "a4_8"
+ ) -> bytes:
     """
     异步生成闪卡PDF
     
@@ -61,12 +61,29 @@ async def generate_flashcards_pdf_async(
         }
         processed_cards.append(processed_card)
     
+    # 如果是A4八卡片布局，补齐空白卡片以满足每页8张的要求
+    if layout == "a4_8":
+        cards_per_page = 8
+        total_cards = len(processed_cards)
+        
+        # 计算需要补齐的空白卡片数量
+        if total_cards % cards_per_page != 0:
+            blank_cards_needed = cards_per_page - (total_cards % cards_per_page)
+            
+            # 添加空白卡片
+            for i in range(blank_cards_needed):
+                blank_card = {
+                    "front": "",
+                    "back": ""
+                }
+                processed_cards.append(blank_card)
+    
     # 渲染HTML
     html_content = template.render(
         title=data.metadata.title if data.metadata else "闪卡集",
         cards=processed_cards,
         layout=layout,
-        style=data.style.dict() if data.style else {}
+        style=data.style.model_dump() if data.style else {}
     )
     
     # 使用Playwright生成PDF
@@ -76,6 +93,25 @@ async def generate_flashcards_pdf_async(
         
         # 设置页面内容
         await page.set_content(html_content, wait_until="networkidle")
+        
+        # 注入JavaScript以动态调整字体大小
+        await page.evaluate('''
+            async () => {
+                const cards = document.querySelectorAll(".card-side");
+                for (const card of cards) {
+                    const content = card.querySelector(".card-content");
+                    if (content) {
+                        let fontSize = parseFloat(window.getComputedStyle(content).fontSize);
+                        while (content.scrollHeight > card.clientHeight && fontSize > 8) {
+                            fontSize -= 0.5;
+                            content.style.fontSize = `${fontSize}px`;
+                            // 等待DOM更新
+                            await new Promise(resolve => requestAnimationFrame(resolve));
+                        }
+                    }
+                }
+            }
+        ''')
         
         # 根据布局设置PDF选项
         pdf_options = {
@@ -94,9 +130,9 @@ async def generate_flashcards_pdf_async(
             pdf_options["format"] = "A4"
             pdf_options["landscape"] = False
         elif layout == "a4_8":
-            # 8卡片布局：A4页面8张卡片，横版
+            # 8卡片布局：A4页面8张卡片，竖版（与模板CSS匹配）
             pdf_options["format"] = "A4"
-            pdf_options["landscape"] = True
+            pdf_options["landscape"] = False
         
         # 生成PDF
         pdf_bytes = await page.pdf(**pdf_options)
@@ -111,8 +147,8 @@ async def generate_flashcards_pdf_async(
 
 def generate_flashcards_pdf(
     flashcard_data: dict,
-    layout: str = "single"
-) -> bytes:
+    layout: str = "a4_8"
+ ) -> bytes:
     """
     同步包装器：生成闪卡PDF
     
@@ -155,7 +191,7 @@ def generate_and_save_pdf(
     output_path: str,
     filename: str,
     layout: str = "single"
-) -> str:
+ ) -> str:
     """
     生成并保存PDF文件
     

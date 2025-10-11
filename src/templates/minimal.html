@@ -3,22 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{title}</title>
-    <meta name="description" content="{description}">
+    <title>{{ title }}</title>
+    <meta name="description" content="{{ description }}">
     <style>
         :root {
-            --primary-color: {primary_color};
-            --secondary-color: {secondary_color};
-            --background-color: {background_color};
-            --text-color: {text_color};
-            --card-front-bg: {card_front_bg};
-            --card-back-bg: {card_back_bg};
-            --card-border: {card_border};
-            --font-family: {font_family};
+            --primary-color: {{ primary_color }};
+            --secondary-color: {{ secondary_color }};
+            --background-color: {{ background_color }};
+            --text-color: {{ text_color }};
+            --card-front-bg: {{ card_front_bg }};
+            --card-back-bg: {{ card_back_bg }};
+            --card-border: {{ card_border }};
+            --card-border-radius: {{ card_border_radius }};
+            --card-padding: {{ card_padding }};
+            --card-box-shadow: {{ card_box_shadow }};
+            --font-family: {{ font_family }};
+            --font-css: {{ font_css }};
+            --card-front-font: {{ card_front_font }};
+            --card-back-font: {{ card_back_font }};
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: var(--font-family); background: var(--background-color); color: var(--text-color); padding: 16px; }
+
+        .container { max-width: 800px; margin: 0 auto; }
+        
+        header { text-align: center; margin-bottom: 30px; }
+        header h1 { color: var(--primary-color); margin-bottom: 10px; font-size: 2.5em; }
+        header p { font-size: 1.1em; opacity: 0.8; }
 
         .flashcard-grid { display: block; }
 
@@ -26,14 +38,14 @@
         .card { width: 74.25mm; height: 105mm; perspective: 1000px; cursor: pointer; position: relative; margin: 0 auto 12mm; display: none; }
         .card.active { display: block; }
         .card.flipped .card-inner { transform: rotateY(180deg); }
-        .card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.08); }
+        .card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; border-radius: var(--card-border-radius); box-shadow: var(--card-box-shadow); }
 
         .card-front, .card-back {
             position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden;
-            padding: 16px; border: 1px solid var(--card-border); border-radius: 8px; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            padding: var(--card-padding); border: var(--card-border); border-radius: var(--card-border-radius); display: flex; flex-direction: column; justify-content: center; align-items: center;
         }
-        .card-front { background: var(--card-front-bg); }
-        .card-back { transform: rotateY(180deg); background: var(--card-back-bg); }
+        .card-front { background: var(--card-front-bg); font: var(--card-front-font); }
+        .card-back { transform: rotateY(180deg); background: var(--card-back-bg); font: var(--card-back-font); }
 
         .deck-name { position: absolute; top: 8px; left: 8px; font-size: 0.75em; font-weight: 500; color: var(--text-color); opacity: 0.7; pointer-events: none; z-index: 10; }
         .card-content { max-height: 100%; overflow: auto; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; text-align: center; gap: 8px; }
@@ -64,9 +76,41 @@
     </style>
 </head>
 <body>
-    <div class="flashcard-grid" id="cardGrid">
-        {cards_html}
+    <div class="container">
+        <header>
+            <h1>{{ title }}</h1>
+            {% if description %}
+            <p>{{ description }}</p>
+            {% endif %}
+        </header>
+        
+        <div class="flashcard-grid" id="cardGrid">
+        {% for card in cards %}
+        <div class="card" id="{{ card.id }}" data-tags="{{ card.tags|join(',') }}">
+            <div class="card-inner">
+                <div class="card-front">
+                    <div class="deck-name">{{ title }}</div>
+                    <div class="card-content">
+                        {{ card.front|safe }}
+                    </div>
+                    {% if card.tags %}
+                    <div class="card-tags">
+                        {% for tag in card.tags %}
+                        <span class="card-tag">{{ tag }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-back">
+                    <div class="card-content">
+                        {{ card.back|safe }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
     </div>
+    
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {

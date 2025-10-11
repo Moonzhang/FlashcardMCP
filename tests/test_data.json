@@ -166,8 +166,10 @@
     ]
   },
   "japanese_ruby_test": {
-    "title": "日文语法与注音测试",
-    "description": "包含日文与对应中文解释，日文显示 ruby 注音",
+    "metadata": {
+      "title": "日文语法与注音测试",
+      "description": "包含日文与对应中文解释，日文显示 ruby 注音"
+    },
     "cards": [
       {
         "front": "<ruby>学校<rt>がっこう</rt></ruby> に <ruby>行<rt>い</rt></ruby>きます",
@@ -176,7 +178,7 @@
       },
       {
         "front": "<ruby>食<rt>た</rt></ruby>べます は <ruby>敬語<rt>けいご</rt></ruby> です",
-        "back": "“食べます”是敬语形式。",
+        "back": "\"食べます\"是敬语形式。",
         "tags": ["日文", "敬语", "RUBY"]
       }
     ]

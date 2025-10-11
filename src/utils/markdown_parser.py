@@ -23,7 +23,7 @@ class MarkdownParser:
         else:
             self.extensions = extensions
         
-        # 配置扩展
+        # 配置扩展 代码高亮和 标题设置
         self.extension_configs = {
             'codehilite': {
                 'css_class': 'highlight',
@@ -42,14 +42,14 @@ class MarkdownParser:
         )
     
     def parse(self, markdown_text: str) -> str:
-        """将 Markdown 文本转换为 HTML
-        
+        """
+        将 Markdown 文本转换为 HTML
         Args:
             markdown_text: 要转换的 Markdown 文本
-            
         Returns:
             转换后的 HTML 字符串
         """
+        #处理空输入
         if not markdown_text:
             return ''
         
@@ -59,7 +59,7 @@ class MarkdownParser:
             # 转换 Markdown 到 HTML
             html = self.md.convert(markdown_text)
 
-            # 如果启用了 toc 扩展，则将目录注入到生成的 HTML 前部
+            # 如果启用了 toc 扩展，则将标题注入到生成的 HTML 前部
             if 'toc' in self.extensions:
                 toc_html = getattr(self.md, 'toc', '')
                 if toc_html:
@@ -109,7 +109,8 @@ class MarkdownParser:
             raise ValueError(f"Markdown 转换失败: {str(e)}")
     
     def parse_with_metadata(self, markdown_text: str) -> dict:
-        """将 Markdown 文本转换为 HTML，并提取元数据
+        """
+        将 Markdown 文本转换为 HTML，并提取元数据
         
         Args:
             markdown_text: 要转换的 Markdown 文本

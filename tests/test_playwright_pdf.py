@@ -5,12 +5,8 @@
 
 import json
 import os
-import sys
 
-# 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
-
-from utils.pdf_generator import generate_flashcards_pdf
+from src.handlers.pdf_generator import generate_flashcards_pdf
 
 def test_playwright_pdf_generation():
     """测试Playwright PDF生成功能"""
