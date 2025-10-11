@@ -26,13 +26,13 @@ FlashCardMCP is a simple yet powerful MCP server that receives JSON data contain
 Install project dependencies using UV:
 
 ```bash
-uv pip install -r requirements.txt
+uv sync
 ```
 
 Or use standard pip:
 
 ```bash
-pip install -r requirements.txt
+pip install -e .
 ```
 
 #### Run MCP Server
@@ -43,21 +43,7 @@ The MCP server uses STDIO transport by default, which is compatible with Claude 
 python main.py
 ```
 
-#### Test MCP Server
 
-You can use the provided test scripts to run all tests:
-
-```bash
-python tests/run_tests.py
-```
-
-Or run specific test modules:
-
-```bash
-python tests/run_tests.py json     # Run JSON validator tests
-python tests/run_tests.py markdown # Run Markdown parser tests
-python tests/run_tests.py card     # Run flashcard generator tests
-```
 
 ### MCP Tools Available
 
@@ -181,9 +167,8 @@ FlashCardMCP/
 │   │   └── csv_reader.py      # CSV reader
 │   └── templates/      # HTML templates
 │       └── card_template.html # Flashcard page template
-├── tests/              # Test files
 ├── project_docs/       # Project documentation
-├── requirements.txt    # Project dependencies
+├── pyproject.toml      # Project configuration and dependencies
 └── README.md          # Project description
 ```
 
@@ -193,21 +178,20 @@ FlashCardMCP/
 
 - Follow PEP 8 style guide
 - Add docstrings to all functions and classes
-- Write unit tests to cover core functionality
+- Write clean and maintainable code
 
 #### Development Workflow
 
 1. Clone the project repository
-2. Install dependencies: `uv pip install -r requirements.txt`
+2. Install dependencies: `uv sync`
 3. Make code changes
-4. Run tests: `python tests/run_tests.py`
-5. Ensure all tests pass before committing code
+4. Ensure code quality before committing
 
 ### Deployment Guide
 
 #### Local Deployment
 
-1. Install all dependencies: `uv pip install -r requirements.txt`
+1. Install all dependencies: `uv sync`
 2. Run MCP service: `python main.py`
 
 ### FAQ
@@ -226,8 +210,8 @@ A: You can modify the `MarkdownParser` class in `src/utils/markdown_parser.py` t
 
 #### Q: What is the difference between MCP server and FastAPI server?
 
-A: `main.py` is a standard MCP server for communication with Claude Desktop and other MCP clients. `src/main.py` is a FastAPI server, mainly used for development testing and Web interface access.
+A: `server.py` is a standard MCP server for communication with Claude Desktop and other MCP clients. `src/main.py` is a FastAPI server, mainly used for development testing and Web interface access.
 
 ### License
 
-[MIT License](LICENSE)
+[GPL License](LICENSE)

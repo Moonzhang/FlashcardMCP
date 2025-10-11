@@ -26,13 +26,13 @@ FlashCardMCP 是一个简单而强大的 MCP 服务，它可以接收包含 Mark
 使用 UV 安装项目依赖：
 
 ```bash
-uv pip install -r requirements.txt
+uv sync
 ```
 
 或者使用标准的 pip 命令：
 
 ```bash
-pip install -r requirements.txt
+pip install -e .
 ```
 
 #### 运行 MCP 服务
@@ -43,21 +43,7 @@ MCP 服务器默认使用 STDIO 传输协议，与 Claude Desktop 等 MCP 客户
 python main.py
 ```
 
-#### 测试 MCP 服务
 
-您可以使用提供的测试脚本来运行所有测试：
-
-```bash
-python tests/run_tests.py
-```
-
-或者运行特定的测试模块：
-
-```bash
-python tests/run_tests.py json  # 运行 JSON 验证器测试
-python tests/run_tests.py markdown  # 运行 Markdown 解析器测试
-python tests/run_tests.py card  # 运行闪卡生成器测试
-```
 
 ### 可用的 MCP 工具
 
@@ -181,9 +167,8 @@ FlashCardMCP/
 │   │   └── csv_reader.py      # CSV 读取器
 │   └── templates/      # HTML 模板
 │       └── card_template.html # 闪卡页面模板
-├── tests/              # 测试文件
 ├── project_docs/       # 项目文档
-├── requirements.txt    # 项目依赖
+├── pyproject.toml      # 项目配置和依赖
 └── README.md          # 项目说明
 ```
 
@@ -193,22 +178,21 @@ FlashCardMCP/
 
 - 遵循 PEP 8 代码风格指南
 - 为所有函数和类添加文档字符串
-- 编写单元测试覆盖核心功能
+- 编写清洁和可维护的代码
 
 #### 开发流程
 
 1. 克隆项目仓库
-2. 安装依赖：`uv pip install -r requirements.txt`
+2. 安装依赖：`uv sync`
 3. 进行代码修改
-4. 运行测试：`python tests/run_tests.py`
-5. 确保所有测试通过后再提交代码
+4. 确保代码质量后再提交代码
 
 ### 部署指南
 
 #### 本地部署
 
-1. 安装所有依赖：`uv pip install -r requirements.txt`
-2. 运行 MCP 服务：`python main.py`
+1. 安装所有依赖：`uv sync`
+2. 运行 MCP 服务：`python server.py`
 
 ### 常见问题
 
@@ -226,7 +210,7 @@ A: 您可以修改 `src/utils/markdown_parser.py` 文件中的 `MarkdownParser` 
 
 #### Q: MCP 服务器和 FastAPI 服务器有什么区别？
 
-A: `main.py` 是标准的 MCP 服务器，用于与 Claude Desktop 等 MCP 客户端通信。`src/main.py` 是 FastAPI 服务器，主要用于开发测试和 Web 界面访问。
+A: `server.py` 是标准的 MCP 服务器，用于与 Claude Desktop 等 MCP 客户端通信。`src/main.py` 是 FastAPI 服务器，主要用于开发测试和 Web 界面访问。
 
 ### 许可证
 

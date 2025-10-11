@@ -22,13 +22,13 @@ FlashCardMCP 是一个简单而强大的 MCP 服务，它可以接收包含 Mark
 使用 UV 安装项目依赖：
 
 ```bash
-uv pip install -r requirements.txt
+uv sync
 ```
 
 或者使用标准的 pip 命令：
 
 ```bash
-pip install -r requirements.txt
+pip install -e .
 ```
 
 #### 运行 MCP 服务
@@ -39,21 +39,7 @@ MCP 服务器默认使用 STDIO 传输协议，与 Claude Desktop 等 MCP 客户
 python main.py
 ```
 
-#### 测试 MCP 服务
 
-您可以使用提供的测试脚本来运行所有测试：
-
-```bash
-python tests/run_tests.py
-```
-
-或者运行特定的测试模块：
-
-```bash
-python tests/run_tests.py json  # 运行 JSON 验证器测试
-python tests/run_tests.py markdown  # 运行 Markdown 解析器测试
-python tests/run_tests.py card  # 运行闪卡生成器测试
-```
 
 ## 许可证
 
