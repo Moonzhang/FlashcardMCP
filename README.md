@@ -36,7 +36,7 @@ pip install -e .
 MCP 服务器默认使用 STDIO 传输协议，与 Claude Desktop 等 MCP 客户端兼容： <mcreference link="https://gofastmcp.com/deployment/running-server" index="2">2</mcreference>
 
 ```bash
-python main.py
+python server.py
 ```
 
 

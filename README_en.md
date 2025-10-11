@@ -29,18 +29,13 @@ Install project dependencies using UV:
 uv sync
 ```
 
-Or use standard pip:
-
-```bash
-pip install -e .
-```
 
 #### Run MCP Server
 
 The MCP server uses STDIO transport by default, which is compatible with Claude Desktop and other MCP clients: <mcreference link="https://gofastmcp.com/deployment/running-server" index="2">2</mcreference>
 
 ```bash
-python main.py
+python server.py
 ```
 
 
@@ -155,7 +150,11 @@ After adding the configuration:
 
 ```
 FlashCardMCP/
-├── main.py             # MCP server entry point
+├── server.py           # MCP server entry point
+├── config.py           # Configuration file
+├── mcp-config.json     # MCP configuration file
+├── pyproject.toml      # Project configuration and dependencies
+├── uv.lock            # UV lock file
 ├── src/
 │   ├── main.py         # FastAPI server (for development testing)
 │   ├── handlers/       # Handler functions
@@ -166,9 +165,11 @@ FlashCardMCP/
 │   │   ├── markdown_parser.py # Markdown parser
 │   │   └── csv_reader.py      # CSV reader
 │   └── templates/      # HTML templates
-│       └── card_template.html # Flashcard page template
-├── project_docs/       # Project documentation
-├── pyproject.toml      # Project configuration and dependencies
+│       ├── card_template.html # Flashcard page template
+│       ├── index.html         # Main page template
+│       ├── minimal.html       # Minimal template
+│       └── playwright_card_template.html # Playwright template
+├── static/             # Static files directory
 └── README.md          # Project description
 ```
 
@@ -192,7 +193,7 @@ FlashCardMCP/
 #### Local Deployment
 
 1. Install all dependencies: `uv sync`
-2. Run MCP service: `python main.py`
+2. Run MCP service: `python server.py`
 
 ### FAQ
 

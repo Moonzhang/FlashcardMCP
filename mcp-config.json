@@ -4,7 +4,7 @@
       "command": "uv",
       "args": [
         "run",
-        "/pathway/to/FlaskCardMCP/server.py"
+        "/pathway/to/FlashCardMCP/server.py"
       ]
     }
   }

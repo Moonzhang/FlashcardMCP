@@ -40,7 +40,7 @@ pip install -e .
 MCP 服务器默认使用 STDIO 传输协议，与 Claude Desktop 等 MCP 客户端兼容： <mcreference link="https://gofastmcp.com/deployment/running-server" index="2">2</mcreference>
 
 ```bash
-python main.py
+python server.py
 ```
 
 
@@ -155,7 +155,11 @@ python main.py
 
 ```
 FlashCardMCP/
-├── main.py             # MCP 服务器主入口文件
+├── server.py           # MCP 服务器主入口文件
+├── config.py           # 配置文件
+├── mcp-config.json     # MCP 配置文件
+├── pyproject.toml      # 项目配置和依赖
+├── uv.lock            # UV 锁定文件
 ├── src/
 │   ├── main.py         # FastAPI 服务器 (用于开发测试)
 │   ├── handlers/       # 处理函数
@@ -166,9 +170,11 @@ FlashCardMCP/
 │   │   ├── markdown_parser.py # Markdown 解析器
 │   │   └── csv_reader.py      # CSV 读取器
 │   └── templates/      # HTML 模板
-│       └── card_template.html # 闪卡页面模板
-├── project_docs/       # 项目文档
-├── pyproject.toml      # 项目配置和依赖
+│       ├── card_template.html # 闪卡页面模板
+│       ├── index.html         # 主页模板
+│       ├── minimal.html       # 简化模板
+│       └── playwright_card_template.html # Playwright 模板
+├── static/             # 静态文件目录
 └── README.md          # 项目说明
 ```
 

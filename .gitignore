@@ -76,13 +76,11 @@ credentials.json
 *.html~  # 备份的HTML文件
 
 # 自定义排除
-.flaskenv
 .python-version
 
 # 确保不忽略模板文件和配置文件（除非明确需要）
 !src/templates/
 !config.py
-!requirements.txt
 
 # 新增忽略规则
 tests/

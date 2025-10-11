@@ -1,12 +1,11 @@
 [project]
-name = "flask-card-mcp"
+name = "fastapi-card-mcp"
 version = "0.1.0"
-description = "Flask Card MCP - PDF Flashcard Generator"
+description = "FastAPI Card MCP - PDF Flashcard Generator"
 authors = [
     {name = "User", email = "user@example.com"}
 ]
 dependencies = [
-    "flask>=2.0.0",
     "jinja2>=3.0.0",
     "reportlab>=4.0.0",
     "playwright>=1.40.0",
