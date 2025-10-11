@@ -8,7 +8,23 @@ from jinja2 import Template
 _template_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'templates')
 
 def generate_flashcards(json_data):
-    """根据 JSON 数据生成闪卡 HTML 页面"""
+    """
+    根据 JSON 数据生成闪卡 HTML 页面。
+
+    Generates flashcard HTML pages based on JSON data.
+
+    Args:
+        json_data (dict): 包含闪卡数据、元数据和样式配置的 JSON 字典。
+                          JSON dictionary containing flashcard data, metadata, and style configurations.
+
+    Returns:
+        str: 渲染后的闪卡 HTML 内容。
+             Rendered flashcard HTML content.
+
+    Raises:
+        ValueError: 如果 JSON 结构无效或闪卡转换失败。
+                    If the JSON structure is invalid or flashcard conversion fails.
+    """
     # 验证 JSON 结构：使用返回的字典结果并在无效时抛出异常
     validation_result = validate_json_structure(json_data)
     if isinstance(validation_result, dict):
@@ -66,7 +82,27 @@ def generate_flashcards(json_data):
 
 def render_flashcard_template(title, description, cards, template='minimal', style_params=None, deck_name='FlashCard'):
     """
-    渲染闪卡模板
+    渲染闪卡模板，将闪卡数据、元数据和样式参数组合成 HTML 字符串。
+
+    Renders a flashcard template, combining flashcard data, metadata, and style parameters into an HTML string.
+
+    Args:
+        title (str): 闪卡集的标题。
+                     Title of the flashcard set.
+        description (str): 闪卡集的描述。
+                           Description of the flashcard set.
+        cards (list): 包含闪卡内容的字典列表。
+                      List of dictionaries containing flashcard content.
+        template (str): 要使用的模板名称（例如 'minimal'）。
+                        Name of the template to use (e.g., 'minimal').
+        style_params (dict, optional): 包含样式配置的字典。默认为 None。
+                                       Dictionary containing style configurations. Defaults to None.
+        deck_name (str): 闪卡组的名称。默认为 'FlashCard'。
+                         Name of the flashcard deck. Defaults to 'FlashCard'.
+
+    Returns:
+        str: 渲染后的 HTML 字符串。
+             Rendered HTML string.
     """
     # 添加调试信息
     print(f"🔍 [DEBUG] render_flashcard_template called with template='{template}'")
@@ -275,7 +311,15 @@ def render_flashcard_template(title, description, cards, template='minimal', sty
     return rendered_html
 
 def get_inline_template():
-    """提供内联的模板内容，以防模板文件不存在"""
+    """
+    提供内联的默认闪卡 HTML 模板内容。
+
+    Provides inline default flashcard HTML template content.
+
+    Returns:
+        str: 包含默认 HTML 模板的字符串。
+             String containing the default HTML template.
+    """
     return '''<!DOCTYPE html>
             <html lang="zh-CN">
             <head>

@@ -14,7 +14,15 @@ from src.utils.markdown_parser import MarkdownParser
 
 
 def get_template_path() -> str:
-    """获取模板文件路径"""
+    """
+    获取用于渲染闪卡 PDF 的 HTML 模板文件路径。
+
+    Retrieves the file path for HTML templates used to render flashcard PDFs.
+
+    Returns:
+        str: 模板目录的绝对路径。
+             Absolute path to the templates directory.
+    """
     current_dir = Path(__file__).parent.parent
     template_dir = current_dir / "templates"
     return str(template_dir)
@@ -25,18 +33,25 @@ async def generate_flashcards_pdf_async(
     layout: str = "a4_8"
  ) -> bytes:
     """
-    异步生成闪卡PDF
-    
+    异步生成闪卡 PDF 文件。
+
+    Asynchronously generates a flashcard PDF file.
+
     Args:
-        flashcard_data: 闪卡数据字典
-        layout: 布局类型 ('single' 或 'a4_8')
-    
+        flashcard_data (dict): 包含闪卡数据、元数据和样式配置的字典。
+                               Dictionary containing flashcard data, metadata, and style configurations.
+        layout (str): PDF 布局类型，可以是 'single'（单张卡片一页）或 'a4_8'（A4 页面八张卡片）。默认为 "a4_8"。
+                      PDF layout type, can be 'single' (one card per page) or 'a4_8' (eight cards per A4 page). Defaults to "a4_8".
+
     Returns:
-        PDF文件的字节数据
-    
+        bytes: 生成的 PDF 文件的字节数据。
+               Byte data of the generated PDF file.
+
     Raises:
-        ValueError: 当数据验证失败时
-        RuntimeError: 当PDF生成失败时
+        ValueError: 当输入数据验证失败时抛出。
+                    Raised when input data validation fails.
+        RuntimeError: 当 PDF 生成过程失败时抛出。
+                      Raised when the PDF generation process fails.
     """
     # 验证和规范化数据
     try:
@@ -150,28 +165,42 @@ def generate_flashcards_pdf(
     layout: str = "a4_8"
  ) -> bytes:
     """
-    同步包装器：生成闪卡PDF
-    
+    同步包装器，用于生成闪卡 PDF 文件。
+    此函数是 `generate_flashcards_pdf_async` 的同步版本，通过 `asyncio.run` 执行异步逻辑。
+
+    Synchronous wrapper for generating flashcard PDF files.
+    This function is a synchronous version of `generate_flashcards_pdf_async`, executing asynchronous logic via `asyncio.run`.
+
     Args:
-        flashcard_data: 闪卡数据字典
-        layout: 布局类型 ('single' 或 'a4_8')
-    
+        flashcard_data (dict): 包含闪卡数据、元数据和样式配置的字典。
+                               Dictionary containing flashcard data, metadata, and style configurations.
+        layout (str): PDF 布局类型，可以是 'single'（单张卡片一页）或 'a4_8'（A4 页面八张卡片）。默认为 "a4_8"。
+                      PDF layout type, can be 'single' (one card per page) or 'a4_8' (eight cards per A4 page). Defaults to "a4_8".
+
     Returns:
-        PDF文件的字节数据
+        bytes: 生成的 PDF 文件的字节数据。
+               Byte data of the generated PDF file.
     """
     return asyncio.run(generate_flashcards_pdf_async(flashcard_data, layout))
 
 
 def save_pdf_to_file(pdf_bytes: bytes, output_path: str, filename: str) -> str:
-    """将PDF字节数据保存到文件
-    
+    """
+    将 PDF 字节数据保存到指定文件路径。
+
+    Saves PDF byte data to the specified file path.
+
     Args:
-        pdf_bytes: PDF字节数据
-        output_path: 输出目录路径
-        filename: 文件名
-    
+        pdf_bytes (bytes): 要保存的 PDF 文件的字节数据。
+                           Byte data of the PDF file to be saved.
+        output_path (str): PDF 文件保存的目录路径。如果目录不存在，将自动创建。
+                           Directory path where the PDF file will be saved. The directory will be created if it does not exist.
+        filename (str): 要保存的 PDF 文件的名称（例如 "flashcards.pdf"）。
+                        Name of the PDF file to be saved (e.g., "flashcards.pdf").
+
     Returns:
-        完整的文件路径
+        str: 保存的 PDF 文件的完整绝对路径。
+             The full absolute path to the saved PDF file.
     """
     # 确保输出目录存在
     os.makedirs(output_path, exist_ok=True)
@@ -193,16 +222,25 @@ def generate_and_save_pdf(
     layout: str = "single"
  ) -> str:
     """
-    生成并保存PDF文件
-    
+    生成闪卡 PDF 文件并将其保存到指定路径。
+    此函数结合了 PDF 生成和文件保存的步骤。
+
+    Generates a flashcard PDF file and saves it to the specified path.
+    This function combines the PDF generation and file saving steps.
+
     Args:
-        flashcard_data: 闪卡数据字典
-        output_path: 输出目录路径
-        filename: 文件名
-        layout: 布局类型 ('single' 或 'a4_8')
-    
+        flashcard_data (dict): 包含闪卡数据、元数据和样式配置的字典。
+                               Dictionary containing flashcard data, metadata, and style configurations.
+        output_path (str): PDF 文件保存的目录路径。如果目录不存在，将自动创建。
+                           Directory path where the PDF file will be saved. The directory will be created if it does not exist.
+        filename (str): 要保存的 PDF 文件的名称（例如 "flashcards.pdf"）。
+                        Name of the PDF file to be saved (e.g., "flashcards.pdf").
+        layout (str): PDF 布局类型，可以是 'single'（单张卡片一页）或 'a4_8'（A4 页面八张卡片）。默认为 "single"。
+                      PDF layout type, can be 'single' (one card per page) or 'a4_8' (eight cards per A4 page). Defaults to "single".
+
     Returns:
-        保存的文件完整路径
+        str: 保存的 PDF 文件的完整绝对路径。
+             The full absolute path to the saved PDF file.
     """
     # 确保输出目录存在
     os.makedirs(output_path, exist_ok=True)
