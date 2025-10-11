@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "FlashcardMCP": {
+      "command": "uv",
+      "args": [
+        "run",
+        "/pathway/to/FlaskCardMCP/server.py"
+      ]
+    }
+  }
+}

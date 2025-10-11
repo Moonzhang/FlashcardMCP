@@ -230,4 +230,4 @@ A: `main.py` 是标准的 MCP 服务器，用于与 Claude Desktop 等 MCP 客�
 
 ### 许可证
 
-[MIT License](LICENSE)
+[GPL License](LICENSE)
