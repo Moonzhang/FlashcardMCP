@@ -8,19 +8,13 @@ from pydantic import BaseModel, Field, field_validator
 class Card(BaseModel):
     id: Optional[str] = None
     front: str = Field(..., min_length=1)
-    back: str = Field(..., min_length=1)
+    back: str = ""
     tags: List[str] = Field(default_factory=list)
     
     @field_validator('front', mode='before')
     def check_empty_string(cls, v):
         if isinstance(v, str) and not v.strip():
             raise ValueError('字符串不能为空或只包含空白字符')
-        return v
-    
-    @field_validator('back', mode='before')
-    def check_back_not_empty(cls, v):
-        if isinstance(v, str) and not v.strip():
-            raise ValueError('back字段不能为空或只包含空白字符')
         return v
 
 

@@ -29,6 +29,12 @@
             position: relative;
         }
         
+        /* 8张卡片布局专用横版页面 */
+        .page.landscape {
+            width: 297mm;  /* A4横版宽度 */
+            height: 210mm; /* A4横版高度 */
+        }
+        
         .page:last-child {
             page-break-after: avoid;
         }
@@ -90,9 +96,19 @@
             box-sizing: border-box;
         }
         
+        /* 反面页面布局 - 调整边距以对齐双面打印 */
+        .a4-8-layout.back-page {
+            padding: 8mm 8mm 8mm 8mm; /* 反面：右边距=正面左边距，左边距=正面右边距 */
+            transform: scaleX(-1); /* 水平翻转整个布局 */
+        }
+        
+        .a4-8-layout.back-page .card {
+            transform: scaleX(-1); /* 再次翻转卡片内容，保持文字正向 */
+        }
+        
         .a4-8-layout .card {
-            width: 62mm;   /* 保守计算，确保不超出界限 */
-            height: 85mm;  /* 保守计算，确保不超出界限 */
+            width: 65mm;   /* 横版A4下调整卡片宽度 */
+            height: 85mm;  /* 保持卡片高度 */
             border: 1px solid #000;
             border-radius: 4px;
             background: white;
@@ -269,6 +285,7 @@
         @media print {
             @page {
                 margin: 0; /* 移除打印边距 */
+                size: A4 landscape; /* 默认使用横版，适合8张卡片布局 */
             }
 
             body {
@@ -322,7 +339,7 @@
         {% set page_cards = cards[page_start:page_start + cards_per_page] %}
         
         <!-- 正面页 -->
-        <div class="page">
+        <div class="page landscape">
             <div class="a4-8-layout">
                 {% for card in page_cards %}
                 <div class="card">
@@ -334,15 +351,11 @@
             </div>
         </div>
         
-        <!-- 反面页（每行从右到左排列，用于双面打印对齐） -->
-        <div class="page">
-            <div class="a4-8-layout">
-                {# 每行分别从右到左排列，确保双面打印时正反面对应 #}
-                {% set row1 = page_cards[0:4] | reverse | list %}
-                {% set row2 = page_cards[4:8] | reverse | list %}
-                {% set reversed_cards_by_row = row1 + row2 %}
-
-                {% for card in reversed_cards_by_row %}
+        <!-- 反面页（使用水平翻转，保持与正面相同的卡片顺序） -->
+        <div class="page landscape">
+            <div class="a4-8-layout back-page">
+                {# 由于使用了CSS水平翻转，保持与正面相同的卡片顺序 1234 5678 #}
+                {% for card in page_cards %}
                 <div class="card">
                     <div class="card-side card-back">
                         <div class="card-content">{{ card.back | safe }}</div>

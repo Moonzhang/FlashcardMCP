@@ -252,9 +252,10 @@ async def upload_csv(
     tags_column: Optional[int] = Form(None),
     has_header: bool = Form(True),
     title: Optional[str] = Form(None),
-    column_separator: str = Form(" ")
+    column_separator: str = Form(" "),
+    output_format: str = Form("html")
  ):
-    """接收CSV文件并转换为闪卡JSON格式
+    """接收CSV文件并转换为闪卡格式
     
     参数：
     - file: 上传的CSV文件
@@ -264,8 +265,17 @@ async def upload_csv(
     - has_header: 是否包含标题行（默认True）
     - title: 闪卡集标题（可选，默认使用文件名）
     - column_separator: 多列内容合并时的分隔符（默认为空格）
+    - output_format: 输出格式（json/html/pdf，默认html）
     """
     try:
+        # 验证输出格式
+        if output_format not in ["json", "html", "pdf"]:
+            return JSONResponse(status_code=400, content={
+                'success': False,
+                'error': 'INVALID_OUTPUT_FORMAT',
+                'message': '输出格式必须是json、html或pdf之一'
+            })
+        
         # 验证文件类型
         if not file.filename or not file.filename.endswith('.csv'):
             return JSONResponse(status_code=400, content={
@@ -310,10 +320,28 @@ async def upload_csv(
                 column_separator=column_separator
             )
             
-            return JSONResponse(content={
-                'success': True,
-                'result': json_data
-            })
+            # 根据输出格式返回不同的结果
+            if output_format == "json":
+                return JSONResponse(content={
+                    'success': True,
+                    'result': json_data
+                })
+            elif output_format == "html":
+                html_content = generate_flashcards(json_data)
+                return JSONResponse(content={
+                    'success': True,
+                    'result': {'html': html_content}
+                })
+            elif output_format == "pdf":
+                pdf_bytes = await generate_flashcards_pdf_async(json_data, layout='a4_8')
+                unique_id = uuid.uuid4().hex[:8]
+                filename = f"{title}_{unique_id}.pdf"
+                encoded_filename = urllib.parse.quote(filename)
+                return StreamingResponse(
+                    io.BytesIO(pdf_bytes),
+                    media_type='application/pdf',
+                    headers={'Content-Disposition': f"attachment; filename*=UTF-8''{encoded_filename}"}
+                )
         finally:
             # 清理临时文件
             if os.path.exists(temp_file_path):
