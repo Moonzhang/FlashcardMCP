@@ -13,37 +13,24 @@ def convert_csv_to_json_data(
     column_separator: str = " "
 ) -> Dict[str, Any]:
     """
-    通用CSV到闪卡JSON转换器，使用列索引。
-
     Converts a CSV file into a flashcard JSON data structure using column indices.
 
     Args:
-        file_path (str): CSV文件路径。
-                         Path to the CSV file.
-        title (Optional[str]): (可选) 闪卡集的标题。如果未提供，则默认为文件名。
-                               (Optional) Title of the flashcard set. Defaults to the filename if not provided.
-        front_columns (Optional[List[int]]): (可选) 作为卡片正面的列索引列表（默认为[0]）。
-                                             (Optional) List of column indices to be used as the front of the cards (defaults to [0]).
-        back_columns (Optional[List[int]]): (可选) 作为卡片背面的列索引列表（默认为[1]）。
-                                            (Optional) List of column indices to be used as the back of the cards (defaults to [1]).
-        tags_column_index (Optional[int]): (可选) 作为标签的列索引，多个标签用逗号分隔。
-                                           (Optional) Column index for tags, where multiple tags are separated by commas.
-        has_header (bool): (可选) CSV文件是否包含标题行（默认为True）。
-                           (Optional) Whether the CSV file contains a header row (defaults to True).
-        column_separator (str): (可选) 多列内容合并时的分隔符（默认为空格）。
-                                (Optional) Separator used when concatenating content from multiple columns (defaults to a space).
+        file_path (str): Path to the CSV file.
+        title (Optional[str]): (Optional) Title of the flashcard set. Defaults to the filename if not provided.
+        front_columns (Optional[List[int]]): (Optional) List of column indices to be used as the front of the cards (defaults to [0]).
+        back_columns (Optional[List[int]]): (Optional) List of column indices to be used as the back of the cards (defaults to [1]).
+        tags_column_index (Optional[int]): (Optional) Column index for tags, where multiple tags are separated by commas.
+        has_header (bool): (Optional) Whether the CSV file contains a header row (defaults to True).
+        column_separator (str): (Optional) Separator used when concatenating content from multiple columns (defaults to a space).
 
     Returns:
-        Dict[str, Any]: 符合闪卡系统格式并通过验证的JSON数据。
-                        JSON data conforming to the flashcard system format and validated.
+        Dict[str, Any]: JSON data conforming to the flashcard system format and validated.
 
     Raises:
-        FileNotFoundError: 如果CSV文件未找到。
-                           If the CSV file is not found.
-        Exception: 读取或处理CSV文件时发生其他错误。
-                   If other errors occur during reading or processing the CSV file.
-        ValueError: 如果CSV文件中没有找到有效的数据行来创建卡片。
-                    If no valid data rows are found in the CSV file to create cards.
+        FileNotFoundError: If the CSV file is not found.
+        Exception: If other errors occur during reading or processing the CSV file.
+        ValueError: If no valid data rows are found in the CSV file to create cards.
     """
     if title is None:
         title = os.path.splitext(os.path.basename(file_path))[0]
@@ -61,12 +48,12 @@ def convert_csv_to_json_data(
             
             if has_header:
                 try:
-                    next(reader)  # 跳过标题行
+                    next(reader)  # Skip header row
                 except StopIteration:
-                    pass # 文件为空
+                    pass # File is empty
 
             for row in reader:
-                if not row: # 跳过空行
+                if not row: # Skip empty rows
                     continue
 
                 # 计算所需的最大列索引
@@ -76,7 +63,7 @@ def convert_csv_to_json_data(
                 max_index = max(all_columns) if all_columns else 0
                 
                 if len(row) <= max_index:
-                    # 如果行中的列数不足以获取所需的所有索引，则跳过此行
+                    # If the number of columns in the row is not enough to get all the required indices, skip this row
                     continue
 
                 # 合并front列的内容
@@ -111,18 +98,18 @@ def convert_csv_to_json_data(
                 cards.append(card)
 
     except FileNotFoundError:
-        raise FileNotFoundError(f"CSV文件未找到: {file_path}")
+        raise FileNotFoundError(f"CSV file not found: {file_path}")
     except Exception as e:
-        raise Exception(f"读取或处理CSV文件时出错: {str(e)}")
+        raise Exception(f"Error reading or processing CSV file: {str(e)}")
 
     if not cards:
-        raise ValueError("CSV文件中没有找到有效的数据行来创建卡片。")
+        raise ValueError("No valid data rows found in the CSV file to create cards.")
 
     # 构建初步的JSON结构
     flashcard_data = {
         "metadata": {
             "title": title,
-            "description": f"从 {os.path.basename(file_path)} 生成的包含 {len(cards)} 张卡片的闪卡集。",
+            "description": f"Flashcard set generated from {os.path.basename(file_path)} with {len(cards)} cards.",
         },
         "cards": cards
     }

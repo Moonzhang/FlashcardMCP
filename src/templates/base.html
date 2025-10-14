@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ title }}{% endblock %}</title>
+    <style>
+        :root {
+            --primary-color: {{ primary_color|default('#3498db') }};
+            --secondary-color: {{ secondary_color|default('#2ecc71') }};
+            --background-color: {{ background_color|default('#f4f4f9') }};
+            --text-color: {{ text_color|default('#333') }};
+            --card-front-bg: {{ card_front_bg|default('white') }};
+            --card-back-bg: {{ card_back_bg|default('#fdfdfd') }};
+            --card-border: {{ card_border|default('1px solid #ddd') }};
+            --card-border-radius: {{ card_border_radius|default('8px') }};
+            --card-padding: {{ card_padding|default('20px') }};
+            --card-box-shadow: {{ card_box_shadow|default('0 4px 8px rgba(0,0,0,0.1)') }};
+            --font-family: {{ font_family|default("'PingFang SC', 'Microsoft YaHei', sans-serif") }};
+            --font-css: {{ font_css|default('') }};
+            --card-front-font: {{ card_front_font|default("normal 400 1.2em/1.5 var(--font-family)") }};
+            --card-back-font: {{ card_back_font|default("normal 400 1em/1.6 var(--font-family)") }};
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: var(--font-family); background: var(--background-color); color: var(--text-color); padding: 16px; }
+
+        .card-content { max-height: 100%; overflow: auto; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; text-align: center; gap: 8px; }
+        .card-content img { display: block; max-width: 100%; max-height: 85%; height: auto; width: auto; object-fit: contain; margin-bottom: 4px; }
+        .card-content audio { width: 100%; margin-top: 8px; }
+        .card-content p, .card-content ul, .card-content ol, .card-content blockquote { margin: 4px 0 0; }
+        .card-content ul { list-style-type: disc; list-style-position: outside; padding-left: 1.25em; margin-left: 0.25em; }
+        .card-content ol { list-style-type: decimal; list-style-position: outside; padding-left: 1.25em; margin-left: 0.25em; }
+        .card-content li { margin: 3px 0; }
+        .card-content table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+        .card-content th, .card-content td { border: 1px solid var(--card-border); padding: 6px 8px; text-align: left; }
+        .card-content thead th { background: rgba(0,0,0,0.06); }
+
+        .card-front .card-content:has(> img:only-child),
+        .card-front .card-content:has(> p:only-child > img:only-child) {
+            padding: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .card-front .card-content img:only-child,
+        .card-front .card-content p:only-child > img:only-child {
+            width: 100%;
+            height: 100%;
+            max-height: 100%;
+            object-fit: cover;
+            margin: 0;
+        }
+
+        {% block styles %}{% endblock %}
+    </style>
+</head>
+<body>
+    {% block body %}{% endblock %}
+</body>
+</html>

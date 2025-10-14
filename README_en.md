@@ -29,6 +29,11 @@ Install project dependencies using UV:
 uv sync
 ```
 
+Or use standard pip command:
+
+```bash
+pip install -e .
+```
 
 #### Run MCP Server
 
@@ -38,16 +43,120 @@ The MCP server uses STDIO transport by default, which is compatible with Claude 
 python server.py
 ```
 
+### FastMCP Configuration
 
+This project uses the FastMCP framework to build MCP services. FastMCP provides a Pythonic interface for creating MCP servers with the following features: <mcreference link="https://gofastmcp.com/getting-started/quickstart" index="3">3</mcreference>
+
+- **Resources**: Expose read-only data through GET endpoints <mcreference link="https://gofastmcp.com/getting-started/quickstart" index="4">4</mcreference>
+- **Tools**: Provide executable functionality through POST endpoints <mcreference link="https://gofastmcp.com/getting-started/quickstart" index="5">5</mcreference>
+- **Multiple Return Types**: Support for text, JSON, images, audio, and more <mcreference link="https://gofastmcp.com/getting-started/quickstart" index="6">6</mcreference>
+
+#### Configuration File
+
+Project configuration is managed through the `config.py` file, containing the following settings:
+
+- **Server Configuration**: Host address, port, debug mode, etc.
+- **Template Configuration**: Available template list and descriptions
+- **Path Configuration**: Template directory, static file directory, etc.
+
+### Available MCP Tools and Resources
+
+The server exposes the following tools and resources through the MCP protocol:
+
+#### Resources
+
+1. **get_flashcard_templates**
+   - **Description**: Get information about all available flashcard templates
+   - **Usage**: Returns template list with names, file paths, and feature descriptions
+   - **Return Format**: JSON format template configuration information
+
+#### Tools
+
+1. **create_flashcards_from_json**
+   - **Description**: Create flashcard HTML pages from JSON data
+   - **Parameters**: 
+     - `data`: JSON data containing flashcard content
+     - `template`: Template name (optional, defaults to "default")
+   - **Usage**: Convert structured flashcard data into interactive HTML pages
+   - **Returns**: Generated HTML content
+
+2. **generate_flashcards_pdf**
+   - **Description**: Export flashcards to PDF format
+   - **Parameters**: 
+     - `data`: Flashcard data
+     - `template`: Template name (optional)
+   - **Usage**: Generate print-ready PDF format flashcards
+   - **Returns**: PDF file binary data
+
+3. **convert_csv_to_flashcards**
+   - **Description**: Convert CSV data to flashcard HTML
+   - **Parameters**: 
+     - `csv_data`: CSV format data
+     - `template`: Template name (optional)
+   - **Usage**: Quickly create flashcards from tabular data
+   - **Returns**: Generated HTML content
+
+4. **validate_flashcard_data**
+   - **Description**: Validate flashcard data format correctness
+   - **Parameters**: 
+     - `data`: Flashcard data to validate
+   - **Usage**: Check if data structure meets flashcard format requirements
+   - **Returns**: Validation results and error messages (if any)
+
+### Flashcard Template Features
+
+The project provides three different flashcard templates, each with unique features and use cases:
+
+#### 1. Default Template
+- **File**: `card_template.html`
+- **Layout**: Fluid grid layout displaying 2 cards per row
+- **Features**:
+  - Responsive design for different screen sizes
+  - Print support with automatic A7 size adjustment
+  - Card flip animation effects
+  - Keyboard navigation support (arrow keys, spacebar)
+  - Card index display
+- **Use Cases**: Suitable for desktop browsing and batch flashcard viewing
+
+#### 2. Minimal Template
+- **File**: `minimal.html`
+- **Layout**: Single card centered display
+- **Features**:
+  - Clean single-card interface
+  - Keyboard navigation (arrow keys to switch cards)
+  - Click-to-flip functionality
+  - Card counter display
+  - Focused study mode
+- **Use Cases**: Suitable for focused learning and card-by-card review
+
+#### 3. Listen Template
+- **File**: `listen.html`
+- **Layout**: Single card + bottom control panel
+- **Features**:
+  - Voice playback functionality (using Web Speech API)
+  - Dictation mode: hide content, play audio only
+  - Fixed bottom control buttons
+  - Keyboard shortcut support:
+    - P: Play/Pause
+    - R: Show/Hide answer
+    - Left/Right arrows: Switch cards
+  - Visual status indicators
+  - Optimized mobile experience
+- **Use Cases**: Suitable for language learning, dictation practice, and audio review
+
+### Demo Page Showcase
+
+> **Note**: Demo page functionality is under development and will be available in future versions.
+
+Planned Demo page will include:
+- Real-time preview of various templates
+- Interactive feature demonstrations
+- Sample data showcases
+- Usage tutorials and best practices
 
 ### MCP Tools Available
 
 The server exposes the following tools through the MCP protocol: <mcreference link="https://gofastmcp.com/getting-started/quickstart" index="3">3</mcreference>
-
-- **generate_flashcard**: Generate flashcard HTML pages from JSON data
-- **validate_flashcard_data**: Validate flashcard data structure
-- **list_flashcard_templates**: List available flashcard templates
-- **export_flashcards_pdf**: Export flashcards to PDF format
 
 ### JSON Data Format
 

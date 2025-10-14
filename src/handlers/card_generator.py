@@ -1,11 +1,11 @@
 from src.utils.json_validator import validate_json_structure, normalize_json_data
 from src.utils.markdown_parser import MarkdownParser
 import os
-from config import FLASHCARD_CONFIG
-from jinja2 import Template
+from config import FLASHCARD_CONFIG, TEMPLATES_DIR
+from jinja2 import Template, Environment, FileSystemLoader
 
-# 设置模板目录
-_template_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'templates')
+# 模板目录路径 - 使用 config.py 中的配置
+_template_dir = TEMPLATES_DIR
 
 def generate_flashcards(json_data):
     """
@@ -142,19 +142,10 @@ def render_flashcard_template(title, description, cards, template='minimal', sty
         else:
             print(f"🔍 [DEBUG] Template file does not exist: {template_path}")
     
-    # 如果没有找到模板文件，尝试直接查找 <template_name>.html
+    # 如果没有找到模板文件，检查是否有其他可用的模板文件
     if not template_content:
-        direct_template_path = os.path.join(_template_dir, f"{template}.html")
-        print(f"🔍 [DEBUG] Trying direct template path: {direct_template_path}")
-        if os.path.exists(direct_template_path):
-            try:
-                with open(direct_template_path, 'r', encoding='utf-8') as f:
-                    template_content = f.read()
-                print(f"🔍 [DEBUG] Successfully loaded template from direct path: {direct_template_path}")
-            except Exception as e:
-                print(f"🔍 [DEBUG] Failed to load template from direct path {direct_template_path}: {e}")
-        else:
-            print(f"🔍 [DEBUG] Direct template file does not exist: {direct_template_path}")
+        print(f"🔍 [DEBUG] Template '{template}' not found in configuration, checking available templates")
+        # 不再尝试直接查找 template.html，因为这会导致配置不一致
     
     # 如果仍然没有找到模板，使用内联模板
     if not template_content:
@@ -302,8 +293,21 @@ def render_flashcard_template(title, description, cards, template='minimal', sty
     print(f"🔍 [DEBUG] Template content length: {len(template_content)}")
     print(f"🔍 [DEBUG] Template content preview (first 200 chars): {template_content[:200]}")
     
-    tmpl = Template(template_content)
-    rendered_html = tmpl.render(**context)
+    # 检查是否使用模板继承
+    if template_content and '{% extends' in template_content:
+        # 使用 Environment 和 FileSystemLoader 来支持模板继承
+        print(f"🔍 [DEBUG] Template uses inheritance, using Environment with FileSystemLoader")
+        env = Environment(loader=FileSystemLoader(_template_dir))
+        # 使用配置中的实际文件名而不是 template.html
+        template_config = FLASHCARD_CONFIG['available_templates'].get(template, {})
+        template_filename = template_config.get('file_path', f"{template}.html")
+        tmpl = env.get_template(template_filename)
+        rendered_html = tmpl.render(**context)
+    else:
+        # 使用传统的 Template 方式
+        print(f"🔍 [DEBUG] Template does not use inheritance, using Template directly")
+        tmpl = Template(template_content)
+        rendered_html = tmpl.render(**context)
     
     print(f"🔍 [DEBUG] Rendered HTML length: {len(rendered_html)}")
     print(f"🔍 [DEBUG] Rendered HTML preview (first 200 chars): {rendered_html[:200]}")

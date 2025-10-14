@@ -40,6 +40,10 @@ FLASHCARD_CONFIG = {
         'minimal': {
             'file_path': 'minimal.html',
             'description': '极简模板，仅展示卡片内容'
+        },
+        'listen': {
+            'file_path': 'listen.html',
+            'description': '听写模板，支持语音合成和听写功能'
         }
         # 未来可以在这里添加更多模板
     },

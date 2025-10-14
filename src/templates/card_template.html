@@ -1,306 +1,150 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title }}</title>
-    <meta name="description" content="{{ description }}">
-    <style>
-        /* theme: {{ theme }} */
-        /* font: {{ font_family }} */
-        /* CSS 变量定义 */
-        :root {
-            --primary-color: {{ primary_color }};
-            --secondary-color: {{ secondary_color }};
-            --background-color: {{ background_color }};
-            --text-color: {{ text_color }};
-            --card-bg: {{ card_bg }};
-            --card-border: {{ card_border }};
-            --font-family: {{ font_family }};
+{% extends "minimal.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block page_styles %}
+<style>
+    @media print {
+        body {
+            padding: 0;
+            background-color: #fff; /* 打印时确保背景为白色 */
         }
-        
-        /* 全局样式 */
-        * {
-            box-sizing: border-box;
-            margin: 0;
+        .card {
+            width: 74.25mm; /* A7 尺寸 */
+            height: 105mm;
+            page-break-inside: avoid;
+            break-inside: avoid;
+            box-shadow: none;
+            border: 1px solid #000;
+        }
+        .card-inner {
+            transform: none !important;
+            box-shadow: none;
+        }
+        .card-front, .card-back {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border: none; /* 移除内部边框，因为卡片本身已有边框 */
+        }
+        .card-back {
+            border: 2px solid #000; /* 打印时反面边框加粗以作区分 */
+        }
+        .card-controls, header, .card-index, .deck-name {
+            display: none !important; /* 打印时隐藏所有非卡片内容 */
+        }
+        main {
             padding: 0;
         }
-        
-        body {
-            font-family: var(--font-family);
-            background-color: var(--background-color);
-            color: var(--text-color);
-            line-height: 1.6;
-            padding: 20px;
-            transition: background-color 0.3s, color 0.3s;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        
-        /* 头部样式 */
-        header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding: 20px;
-            border-bottom: 1px solid var(--card-border);
-        }
-        
-        h1 {
-            color: var(--primary-color);
-            margin-bottom: 10px;
-            font-size: 2.5em;
-        }
-        
-        header p {
-            font-size: 1.1em;
-            opacity: 0.8;
-        }
-
-        /* （已简化）移除导出与打印按钮样式 */
-
-        /* 打印样式 */
-        @media print {
-            body { padding: 0; }
-            .card { break-inside: avoid; width: 74.25mm; height: 105mm; page-break-inside: avoid; }
-            .card-inner { transform: none !important; box-shadow: none; }
-            .card-front, .card-back { position: relative; height: 105mm; border: 1px solid #000; }
-            .card-back { border: 2px solid #000; }
-        }
-        
-        /* 闪卡容器：单卡分页视图 */
         .flashcard-grid {
-            display: block;
-            margin-bottom: 30px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr); /* 每行2张卡片 */
+            gap: 0;
+            page-break-after: always;
         }
-        
-        /* 闪卡样式 */
-        .card {
-            width: 74.25mm; /* 竖版：A4高度的四分之一作为宽度 */
-            height: 105mm; /* 竖版：A4宽度的一半作为高度 */
-            perspective: 1000px;
-            cursor: pointer;
-            transition: transform 0.2s;
-            margin: 0 auto 12mm; /* 视觉上分隔每页 */
-            display: none; /* 默认仅显示一个活动卡片 */
-            position: relative;
-            page-break-after: always; /* 打印时每张单独一页 */
-        }
+    }
+</style>
+{% endblock %}
 
-        .card.active { display: block; }
-        
-        .card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .card-inner {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            text-align: center;
-            transition: transform 0.6s;
-            transform-style: preserve-3d;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            z-index: 1;
-        }
-        
-        .card.flipped .card-inner {
-            transform: rotateY(180deg);
-        }
-        
-        .card-front, .card-back {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            -webkit-backface-visibility: hidden;
-            backface-visibility: hidden;
-            border-radius: 8px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background-color: var(--card-bg);
-            border: 1px solid var(--card-border);
-            transition: background-color 0.3s, border-color 0.3s;
-            z-index: 2;
-        }
+{% block body_content %}
+<div class="container">
+    <header>
+        <h1>{{ title }}</h1>
+        {{ description_section | safe }}
+    </header>
 
-        /* 集合名标签（卡片左上角） */
-        .deck-name {
-            position: absolute;
-            top: 8px;
-            left: 8px;
-            font-size: 10pt;
-            color: var(--text-color);
-            opacity: 0.7;
-            pointer-events: none;
-            z-index: 3;
-        }
-
-        /* 卡片序号标签（卡片右下角） */
-        .card-index {
-            position: absolute;
-            bottom: 8px;
-            right: 8px;
-            font-size: 10pt;
-            color: var(--text-color);
-            opacity: 0.7;
-            pointer-events: none;
-            z-index: 3;
-        }
-        
-        .card-back {
-            transform: rotateY(180deg);
-            border: 2px solid #000; /* 反面边框更明显 */
-        }
-        
-        .card-content {
-            max-height: 100%;
-            overflow-y: auto;
-            width: 100%;
-        }
-        
-        .card-tags {
-            margin-top: 10px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            justify-content: center;
-        }
-        
-        .card-tag {
-            background-color: var(--secondary-color);
-            color: white;
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-size: 0.8em;
-            transition: background-color 0.3s;
-        }
-        
-        /* （已简化）移除控制按钮样式 */
-        
-        /* （已简化）移除过滤器样式 */
-        
-        /* （已简化）移除搜索框样式 */
-        
-        /* （已简化）移除统计信息样式 */
-        
-        /* （已简化）移除底部样式 */
-        
-        /* 响应式设计 */
-        /* 移除响应式自适应，保持固定A4比例 */
-        
-        /* 打印样式 */
-        /* 打印样式（上方已有定义，以下重复定义移除） */
-    </style>
-</head>
-<body>
-    <div class="container">
-        <header>
-            <h1>{{ title }}</h1>
-            {{ description_section }}
-        </header>
-
-        <!-- 控制区：搜索框 -->
-        <div class="card-controls">
-            <input id="searchInput" type="text" placeholder="搜索卡片..." style="padding:8px; border:1px solid var(--card-border); border-radius:4px; width: 240px;" />
+    <main>
+        <!-- 闪卡网格 -->
+        <div class="flashcard-grid" id="cardGrid">
+            {{ cards_html | safe }}
         </div>
+    </main>
+</div>
+{% endblock %}
 
-        <!-- 过滤器按钮占位符 -->
-        {{ filter_section }}
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.card');
+        let currentCardIndex = 0;
+        let visibleCards = Array.from(cards);
 
-        <main>
-            <!-- 闪卡网格 -->
-            <div class="flashcard-grid" id="cardGrid">
-                {{ cards_html }}
-            </div>
-        </main>
-    </div>
-    
-    <script>
-        // 交互：单卡展示、点击翻转、方向键导航、搜索筛选
-        document.addEventListener('DOMContentLoaded', function() {
-            const cards = document.querySelectorAll('.card');
-            const searchInput = document.getElementById('searchInput');
-            let currentCardIndex = 0;
+        function showCurrentCard() {
+            if (visibleCards.length === 0) return;
+            
+            // 隐藏所有卡片
+            cards.forEach(card => {
+                card.style.display = 'none';
+                card.classList.remove('active');
+            });
 
-            function showOnlyIndex(index) {
-                cards.forEach((card, i) => {
-                    if (i === index) {
-                        card.style.display = 'block';
-                        card.classList.add('active');
-                    } else {
-                        card.style.display = 'none';
-                        card.classList.remove('active');
-                    }
-                });
+            // 显示当前卡片
+            const cardToShow = visibleCards[currentCardIndex];
+            cardToShow.style.display = 'block';
+            cardToShow.classList.add('active');
+            updateCardIndexDisplay(cardToShow);
+        }
+
+        function updateCardIndexDisplay(card) {
+            const cardIndexElement = card.querySelector('.card-index');
+            if (cardIndexElement) {
+                const overallIndex = Array.from(cards).indexOf(card);
+                cardIndexElement.textContent = `${overallIndex + 1}/${cards.length}`;
             }
+        }
 
-            showOnlyIndex(0);
-
-            // 为每张卡片的正反面添加右下角序号，如 1/4
-            const totalCards = cards.length;
-            cards.forEach((card, i) => {
-                const indexText = `${i + 1}/${totalCards}`;
-                ['.card-front', '.card-back'].forEach(selector => {
-                    const face = card.querySelector(selector);
-                    if (face) {
-                        const span = document.createElement('div');
+        // 初始化所有卡片的序号
+        cards.forEach((card, i) => {
+            const indexText = `${i + 1}/${cards.length}`;
+            ['.card-front', '.card-back'].forEach(selector => {
+                const face = card.querySelector(selector);
+                if (face) {
+                    let span = face.querySelector('.card-index');
+                    if (!span) {
+                        span = document.createElement('div');
                         span.className = 'card-index';
-                        span.textContent = indexText;
                         face.appendChild(span);
                     }
-                });
-            });
-
-            cards.forEach(card => {
-                card.addEventListener('click', function() {
-                    this.classList.toggle('flipped');
-                });
-            });
-
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'ArrowLeft') {
-                    currentCardIndex = (currentCardIndex - 1 + cards.length) % cards.length;
-                    showOnlyIndex(currentCardIndex);
-                } else if (e.key === 'ArrowRight') {
-                    currentCardIndex = (currentCardIndex + 1) % cards.length;
-                    showOnlyIndex(currentCardIndex);
-                } else if (e.key === ' ') {
-                    e.preventDefault();
-                    const visibleCard = Array.from(cards).find(c => c.classList.contains('active'));
-                    if (visibleCard) visibleCard.classList.toggle('flipped');
+                    span.textContent = indexText;
                 }
             });
+        });
 
-            // 搜索功能：过滤卡片内容
-            if (searchInput) {
-                searchInput.addEventListener('input', function() {
-                    const query = this.value.trim().toLowerCase();
-                    const grid = document.getElementById('cardGrid');
-                    const items = grid ? Array.from(grid.children) : [];
-                    // 保持单卡视图：匹配则显示，否则隐藏
-                    let firstMatchIndex = 0;
-                    items.forEach((card, idx) => {
-                        const text = card.textContent.toLowerCase();
-                        const isMatch = query ? text.includes(query) : true;
-                        card.style.display = isMatch ? 'block' : 'none';
-                        card.classList.toggle('active', isMatch);
-                        if (isMatch && firstMatchIndex === 0) firstMatchIndex = idx;
-                    });
-                    // 若有查询，显示第一个匹配项；否则恢复当前索引
-                    if (query) {
-                        showOnlyIndex(firstMatchIndex);
-                    } else {
-                        showOnlyIndex(currentCardIndex);
-                    }
-                });
+        // 点击翻转
+        cards.forEach(card => {
+            card.addEventListener('click', function(e) {
+                // 防止点击链接时翻转卡片
+                if (e.target.tagName.toLowerCase() !== 'a') {
+                    this.classList.toggle('flipped');
+                }
+            });
+        });
+
+        // 键盘导航
+        document.addEventListener('keydown', function(e) {
+            if (visibleCards.length === 0) return;
+
+            if (e.key === 'ArrowLeft') {
+                currentCardIndex = (currentCardIndex - 1 + visibleCards.length) % visibleCards.length;
+                showCurrentCard();
+            } else if (e.key === 'ArrowRight') {
+                currentCardIndex = (currentCardIndex + 1) % visibleCards.length;
+                showCurrentCard();
+            } else if (e.key === ' ') {
+                e.preventDefault();
+                const activeCard = visibleCards[currentCardIndex];
+                if (activeCard) {
+                    activeCard.classList.toggle('flipped');
+                }
             }
         });
-    </script>
-</body>
-</html>
+
+        // 搜索功能已移除
+
+        // 初始显示所有卡片
+        cards.forEach(card => {
+            card.style.display = 'block';
+        });
+    });
+</script>
+{% endblock %}

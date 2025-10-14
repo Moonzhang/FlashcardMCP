@@ -3,40 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title }}</title>
+    <title>{% block title %}{{ title }}{% endblock %}</title>
     <meta name="description" content="{{ description }}">
     <style>
+        /* CSS Variables */
         :root {
-            --primary-color: {{ primary_color }};
-            --secondary-color: {{ secondary_color }};
-            --background-color: {{ background_color }};
-            --text-color: {{ text_color }};
-            --card-front-bg: {{ card_front_bg }};
-            --card-back-bg: {{ card_back_bg }};
-            --card-border: {{ card_border }};
-            --card-border-radius: {{ card_border_radius }};
-            --card-padding: {{ card_padding }};
-            --card-box-shadow: {{ card_box_shadow }};
-            --font-family: {{ font_family }};
-            --font-css: {{ font_css }};
-            --card-front-font: {{ card_front_font }};
-            --card-back-font: {{ card_back_font }};
+            --primary-color: {{ primary_color | default('#3498db') }};
+            --secondary-color: {{ secondary_color | default('#2ecc71') }};
+            --background-color: {{ background_color | default('#f4f4f9') }};
+            --text-color: {{ text_color | default('#333') }};
+            --card-front-bg: {{ card_front_bg | default('white') }};
+            --card-back-bg: {{ card_back_bg | default('#fdfdfd') }};
+            --card-border: {{ card_border | default('1px solid #ddd') }};
+            --card-border-radius: {{ card_border_radius | default('8px') }};
+            --card-padding: {{ card_padding | default('20px') }};
+            --card-box-shadow: {{ card_box_shadow | default('0 4px 8px rgba(0,0,0,0.1)') }};
+            --font-family: {{ font_family | default("'PingFang SC', 'Microsoft YaHei', sans-serif") }};
+            --font-css: {{ font_css | default('') }};
+            --card-front-font: {{ card_front_font | default("normal 400 1.2em/1.5 var(--font-family)") }};
+            --card-back-font: {{ card_back_font | default("normal 400 1em/1.6 var(--font-family)") }};
         }
 
+        /* Basic Resets */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: var(--font-family); background: var(--background-color); color: var(--text-color); padding: 16px; }
 
-        .container { max-width: 800px; margin: 0 auto; }
-        
-        header { text-align: center; margin-bottom: 30px; }
-        header h1 { color: var(--primary-color); margin-bottom: 10px; font-size: 2.5em; }
-        header p { font-size: 1.1em; opacity: 0.8; }
-
-        .flashcard-grid { display: block; }
-
-        /* 单卡视图，A4 八分之一竖版尺寸：74.25mm x 105mm */
-        .card { width: 74.25mm; height: 105mm; perspective: 1000px; cursor: pointer; position: relative; margin: 0 auto 12mm; display: none; }
-        .card.active { display: block; }
+        /* SHARED CARD STYLES */
+        .card { width: 74.25mm; height: 105mm; perspective: 1000px; cursor: pointer; position: relative; }
         .card.flipped .card-inner { transform: rotateY(180deg); }
         .card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; border-radius: var(--card-border-radius); box-shadow: var(--card-box-shadow); }
 
@@ -48,23 +41,35 @@
         .card-back { transform: rotateY(180deg); background: var(--card-back-bg); font: var(--card-back-font); }
 
         .deck-name { position: absolute; top: 8px; left: 8px; font-size: 0.75em; font-weight: 500; color: var(--text-color); opacity: 0.7; pointer-events: none; z-index: 10; }
+        .card-index { position: absolute; bottom: 8px; right: 8px; font-size: 0.7em; font-weight: 500; color: var(--text-color); opacity: 0.6; pointer-events: none; z-index: 10; }
         .card-content { max-height: 100%; overflow: auto; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; text-align: center; gap: 8px; }
-        /* 反面内容上下居中，并留出上边框空间 */
         .card-back { justify-content: center; align-items: center; padding-top: 24px; }
         .card-back .card-content { width: 100%; max-width: 90%; margin: 0 auto; align-items: flex-start; text-align: left; }
-        .card-content img { display: block; max-width: 100%; max-height: 60%; height: auto; width: auto; object-fit: contain; margin-bottom: 4px; }
+        .card-content img { display: block; max-width: 100%; max-height: 85%; height: auto; width: auto; object-fit: contain; margin-bottom: 4px; }
+        .card-content audio { width: 100%; margin-top: 8px; }
         .card-content p, .card-content ul, .card-content ol, .card-content blockquote { margin: 4px 0 0; }
-        /* 列表样式：确保显示项目符号与序号，并提供缩进 */
         .card-content ul { list-style-type: disc; list-style-position: outside; padding-left: 1.25em; margin-left: 0.25em; }
         .card-content ol { list-style-type: decimal; list-style-position: outside; padding-left: 1.25em; margin-left: 0.25em; }
         .card-content li { margin: 3px 0; }
-        /* 隐藏标签显示 */
-        .card-tags, .card-tag { display: none !important; }
-
-        /* 表格边框样式 */
         .card-content table { width: 100%; border-collapse: collapse; margin-top: 4px; }
         .card-content th, .card-content td { border: 1px solid var(--card-border); padding: 6px 8px; text-align: left; }
         .card-content thead th { background: rgba(0,0,0,0.06); }
+        .card-front .card-content:has(> img:only-child),
+        .card-front .card-content:has(> p:only-child > img:only-child) { padding: 0; width: 100%; height: 100%; }
+        .card-front .card-content img:only-child,
+        .card-front .card-content p:only-child > img:only-child { width: 100%; height: 100%; max-height: 100%; object-fit: cover; margin: 0; }
+        .card-tags, .card-tag { display: none !important; }
+    </style>
+    {% block page_styles %}
+    <style>
+        /* Styles for minimal.html layout */
+        .container { max-width: 800px; margin: 0 auto; }
+        header { text-align: center; margin-bottom: 30px; }
+        header h1 { color: var(--primary-color); margin-bottom: 10px; font-size: 2.5em; }
+        header p { font-size: 1.1em; opacity: 0.8; }
+        .flashcard-grid { display: block; }
+        .card { margin: 0 auto; display: none; }
+        .card.active { display: block; }
 
         @media print {
             body { padding: 0; }
@@ -74,22 +79,18 @@
             .card-back { border: 2px solid #000; }
         }
     </style>
+    {% endblock %}
 </head>
 <body>
+    {% block body_content %}
     <div class="container">
-        <header>
-            <h1>{{ title }}</h1>
-            {% if description %}
-            <p>{{ description }}</p>
-            {% endif %}
-        </header>
-        
         <div class="flashcard-grid" id="cardGrid">
         {% for card in cards %}
         <div class="card" id="{{ card.id }}" data-tags="{{ card.tags|join(',') }}">
             <div class="card-inner">
                 <div class="card-front">
                     <div class="deck-name">{{ title }}</div>
+                    <div class="card-index">{{ loop.index }}/{{ cards|length }}</div>
                     <div class="card-content">
                         {{ card.front|safe }}
                     </div>
@@ -102,6 +103,7 @@
                     {% endif %}
                 </div>
                 <div class="card-back">
+                    <div class="card-index">{{ loop.index }}/{{ cards|length }}</div>
                     <div class="card-content">
                         {{ card.back|safe }}
                     </div>
@@ -110,28 +112,28 @@
         </div>
         {% endfor %}
     </div>
+    {% endblock %}
     
-
+    {% block scripts %}
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         const cards = Array.from(document.querySelectorAll('.card'))
-        let currentIndex = 0
+        let currentCardIndex = 0
 
+        // 显示指定索引的卡片
         function showOnlyIndex(index) {
             const total = cards.length
-            currentIndex = ((index % total) + total) % total
+            currentCardIndex = ((index % total) + total) % total // 确保索引在有效范围内
             cards.forEach((card, i) => {
-                if (i === currentIndex) {
-                    card.style.display = 'block'
+                if (i === currentCardIndex) {
                     card.classList.add('active')
                 } else {
-                    card.style.display = 'none'
                     card.classList.remove('active')
                 }
             })
         }
 
-        // 初始显示第一张
+        // 初始化显示第一张卡片
         showOnlyIndex(0)
 
         // 点击翻转
@@ -139,55 +141,16 @@
             card.addEventListener('click', () => card.classList.toggle('flipped'))
         })
 
-        // 键盘导航：左右方向键，空格翻转
+        // 键盘导航
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowLeft') {
-                showOnlyIndex(currentIndex - 1)
-            } else if (e.key === 'ArrowRight') {
-                showOnlyIndex(currentIndex + 1)
-            } else if (e.key === ' ') {
-                e.preventDefault()
-                const visible = cards[currentIndex]
-                if (visible) visible.classList.toggle('flipped')
+            if (e.key === 'ArrowRight') {
+                showOnlyIndex(currentCardIndex + 1)
+            } else if (e.key === 'ArrowLeft') {
+                showOnlyIndex(currentCardIndex - 1)
             }
         })
-
-        // 触屏滑动导航
-        let touchStartX = 0
-        let touchStartY = 0
-        let touchStartTime = 0
-        const grid = document.getElementById('cardGrid')
-        const SWIPE_THRESHOLD = 30 // px
-
-        function onTouchStart(e) {
-            const t = e.touches ? e.touches[0] : e
-            touchStartX = t.clientX
-            touchStartY = t.clientY
-            touchStartTime = Date.now()
-        }
-        function onTouchEnd(e) {
-            const t = e.changedTouches ? e.changedTouches[0] : e
-            const dx = t.clientX - touchStartX
-            const dy = t.clientY - touchStartY
-            const adx = Math.abs(dx)
-            const ady = Math.abs(dy)
-            const isHorizontal = adx > ady && adx > SWIPE_THRESHOLD
-            if (isHorizontal) {
-                if (dx < 0) {
-                    // 左滑 -> 下一张
-                    showOnlyIndex(currentIndex + 1)
-                } else {
-                    // 右滑 -> 上一张
-                    showOnlyIndex(currentIndex - 1)
-                }
-            }
-        }
-        grid.addEventListener('touchstart', onTouchStart, { passive: true })
-        grid.addEventListener('touchend', onTouchEnd, { passive: true })
-        // 支持鼠标拖拽作为滑动替代
-        grid.addEventListener('mousedown', onTouchStart)
-        grid.addEventListener('mouseup', onTouchEnd)
     })
     </script>
+    {% endblock %}
 </body>
 </html>

@@ -1,0 +1,260 @@
+{% extends "minimal.html" %}
+
+{% block title %}听写卡片{% endblock %}
+
+{% block page_styles %}
+{{ super() }}
+<style>
+    /* 听写模式特有样式 */
+    .container {
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: calc(100vh - 120px); /* 为底部按钮留出更多空间 */
+        padding-bottom: 80px; /* 确保卡片不会被底部按钮遮挡 */
+    }
+    .flashcard-grid {
+        display: block; /* 覆盖 minimal.html 的布局 */
+        width: 100%;
+        max-width: 400px; /* 限制卡片最大宽度 */
+    }
+    .card {
+        margin: 0 auto; /* 居中显示 */
+        display: none; /* 默认隐藏所有卡片 */
+        width: 100%; /* 使用容器的全宽 */
+        max-width: 74.25mm; /* 保持标准卡片尺寸 */
+    }
+    .card.active {
+        display: block; /* 只显示当前激活的卡片 */
+    }
+    
+    /* 控制按钮区域 - 位于卡片外部 */
+    .listen-controls {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 12px;
+        z-index: 1000;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 12px 24px;
+        border-radius: 30px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .listen-controls button {
+        padding: 10px 18px;
+        font-size: 0.9em;
+        font-weight: 500;
+        border: none;
+        border-radius: 22px;
+        cursor: pointer;
+        background: linear-gradient(135deg, var(--primary-color), #2980b9);
+        color: white;
+        transition: all 0.3s ease;
+        min-width: 90px;
+        box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+    }
+    
+    .listen-controls button:hover {
+        background: linear-gradient(135deg, #2980b9, #1f5f8b);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+    }
+    
+    .listen-controls button:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 6px rgba(52, 152, 219, 0.3);
+    }
+    
+    /* 听写状态指示 */
+    .listen-status {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.85);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 25px;
+        font-size: 1em;
+        font-weight: 500;
+        display: none;
+        z-index: 100;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    /* 隐藏卡片内容的状态 */
+    .card.listening .card-content {
+        opacity: 0.2;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+    }
+    
+    .card.listening .listen-status {
+        display: block;
+        animation: pulse 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+</style>
+{% endblock %}
+
+{% block body_content %}
+{{ super() }}
+<!-- 听写控制按钮 -->
+<div class="listen-controls">
+    <button id="play-button">🔊 播放</button>
+    <button id="reveal-button">👁️ 显示答案</button>
+    <button id="next-button">➡️ 下一张</button>
+</div>
+
+<!-- 听写状态指示 */
+<div class="listen-status" id="listen-status">
+    正在播放...
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    // 听写功能脚本
+    const playButton = document.getElementById('play-button');
+    const revealButton = document.getElementById('reveal-button');
+    const nextButton = document.getElementById('next-button');
+    const listenStatus = document.getElementById('listen-status');
+    const cardGrid = document.getElementById('cardGrid');
+    const cards = Array.from(document.querySelectorAll('.card'));
+
+    let isRevealed = false;
+    let currentCardIndex = 0;
+
+    function showOnlyIndex(index) {
+        const total = cards.length;
+        currentCardIndex = ((index % total) + total) % total; // 确保索引在有效范围内
+        cards.forEach((card, i) => {
+            if (i === currentCardIndex) {
+                card.classList.add('active');
+            } else {
+                card.classList.remove('active');
+            }
+        });
+        // 每次切换卡片时，重置翻转状态和显示答案按钮文本
+        isRevealed = false;
+        revealButton.textContent = '👁️ 显示答案';
+        // 停止任何正在进行的语音播放
+        speechSynthesis.cancel();
+        // 移除listening状态
+        const currentCard = getCurrentCard();
+        if (currentCard) {
+            currentCard.classList.remove('listening', 'flipped');
+        }
+    }
+
+    // 获取当前显示的卡片
+    function getCurrentCard() {
+        return cards[currentCardIndex];
+    }
+
+    // 获取当前卡片的内容
+    function getCurrentCardContent() {
+        const currentCard = getCurrentCard();
+        if (currentCard) {
+            const frontContent = currentCard.querySelector('.card-front .card-content');
+            return frontContent ? frontContent.textContent.trim() : '';
+        }
+        return '';
+    }
+
+    // 初始显示第一张卡片
+    showOnlyIndex(0);
+
+    // 播放当前卡片内容
+    playButton.addEventListener('click', () => {
+        const content = getCurrentCardContent();
+        if (content && 'speechSynthesis' in window) {
+            speechSynthesis.cancel(); // 停止之前的播放
+
+            const currentCard = getCurrentCard();
+            if (currentCard) {
+                currentCard.classList.add('listening');
+                listenStatus.textContent = '正在播放...';
+            }
+
+            const utterance = new SpeechSynthesisUtterance(content);
+            utterance.lang = 'zh-CN'; // 设置中文语音
+            utterance.rate = 0.8; // 稍慢的语速
+
+            utterance.onend = () => {
+                if (currentCard) {
+                    currentCard.classList.remove('listening');
+                }
+                isRevealed = false;
+            };
+
+            speechSynthesis.speak(utterance);
+        } else if (!content) {
+            alert('没有找到卡片内容');
+        } else {
+            alert('您的浏览器不支持语音合成功能');
+        }
+    });
+
+    // 显示/隐藏答案
+    revealButton.addEventListener('click', () => {
+        const currentCard = getCurrentCard();
+        if (currentCard) {
+            if (!isRevealed) {
+                currentCard.classList.remove('listening');
+                currentCard.classList.add('flipped');
+                revealButton.textContent = '🙈 隐藏答案';
+                isRevealed = true;
+            } else {
+                currentCard.classList.remove('flipped');
+                revealButton.textContent = '👁️ 显示答案';
+                isRevealed = false;
+            }
+        }
+    });
+
+    // 下一张卡片
+    nextButton.addEventListener('click', () => {
+        showOnlyIndex(currentCardIndex + 1);
+    });
+
+    // 键盘快捷键支持
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'p' || e.key === 'P') {
+            e.preventDefault();
+            playButton.click();
+        } else if (e.key === 'r' || e.key === 'R') {
+            e.preventDefault();
+            revealButton.click();
+        } else if (e.key === 'ArrowRight') { // 添加右箭头切换下一张卡片
+            e.preventDefault();
+            nextButton.click();
+        } else if (e.key === 'ArrowLeft') { // 添加左箭头切换上一张卡片
+            e.preventDefault();
+            showOnlyIndex(currentCardIndex - 1);
+        }
+    });
+
+    // 停止语音播放当页面失去焦点时
+    window.addEventListener('blur', () => {
+        speechSynthesis.cancel();
+        const currentCard = getCurrentCard();
+        if (currentCard) {
+            currentCard.classList.remove('listening');
+        }
+    });
+</script>
+{% endblock %}
