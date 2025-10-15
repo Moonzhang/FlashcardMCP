@@ -1,5 +1,7 @@
 # FlashCardMCP / 闪卡生成MCP服务
 
+**Version: 10.1**
+
 [English](#english) | [中文](#中文)
 
 ---
@@ -10,7 +12,11 @@ A FastMCP-based MCP server for converting JSON-formatted Markdown content into i
 
 ### Project Overview
 
-FlashCardMCP is a simple yet powerful MCP server that receives JSON data containing Markdown content and converts it into beautiful, interactive flashcard pages. This service is ideal for learning, teaching, and knowledge management scenarios, helping users create their own digital flashcard collections.
+FlashCardMCP is a FastMCP-based MCP service designed to convert Markdown content in JSON/CSV format into interactive flashcard pages. This service is suitable for learning, teaching, knowledge management, and any other scenario you desire, helping users create their own digital flashcard sets.
+- **Content Focus**: Utilizes Markdown format, aligning with LLM output, allowing users to concentrate on content creation rather than irrelevant formatting details.
+- **Stable Output**: Employs functions to stably generate flashcards, supporting CSS style input to meet personalized needs.
+- **Scenario-Based Templates**: Provides pre-built templates for various scenarios, with further expansion planned.
+- **PDF Output**: Flashcards can be printed as PDFs (8 cards per sheet), further accommodating different scenarios and real-world applications for use and memorization.        
 
 ### Tech Stack
 
@@ -65,39 +71,53 @@ The server exposes the following tools and resources through the MCP protocol:
 
 #### Resources
 
-1. **get_flashcard_templates**
-   - **Description**: Get information about all available flashcard templates
-   - **Usage**: Returns template list with names, file paths, and feature descriptions
+1. **flashcard-templates**
+   - **URI**: `resource://flashcard-templates`
+   - **Description**: Get information about all available flashcard templates and their configurations
    - **Return Format**: JSON format template configuration information
 
 #### Tools
 
 1. **create_flashcards_from_json**
-   - **Description**: Create flashcard HTML pages from JSON data
+   - **Description**: Create interactive HTML flashcards from JSON card data
    - **Parameters**: 
-     - `data`: JSON data containing flashcard content
-     - `template`: Template name (optional, defaults to "default")
-   - **Usage**: Convert structured flashcard data into interactive HTML pages
-   - **Returns**: Generated HTML content
+     - `cards`: List of flashcard data with 'front', 'back', and optional 'tags'
+     - `title`: Title for the flashcard set
+     - `description`: Description of the flashcard set
+     - `template`: Template type ('minimal', 'default', 'elegant')
+     - `theme`: Theme ('light' or 'dark')
+   - **Returns**: Generated HTML content as string
 
 2. **generate_flashcards_pdf**
-   - **Description**: Export flashcards to PDF format
+   - **Description**: Generate PDF flashcards from JSON card data
    - **Parameters**: 
-     - `data`: Flashcard data
-     - `template`: Template name (optional)
-   - **Usage**: Generate print-ready PDF format flashcards
-   - **Returns**: PDF file binary data
+     - `cards`: List of flashcard data with 'front', 'back', and optional 'tags'
+     - `title`: Title for the flashcard set
+     - `description`: Description of the flashcard set
+     - `layout`: Layout type ('single' or 'a4_8')
+     - `output_path`: Directory path to save the PDF file
+   - **Returns**: Success message with file path and size information
 
-3. **convert_csv_to_flashcards**
-   - **Description**: Convert CSV data to flashcard HTML
+3. **convert_csv_to_json**
+   - **Description**: Convert CSV content to flashcard JSON format
    - **Parameters**: 
-     - `csv_data`: CSV format data
-     - `template`: Template name (optional)
-   - **Usage**: Quickly create flashcards from tabular data
-   - **Returns**: Generated HTML content
+     - `csv_content`: Raw CSV content as string
+     - `front_columns`: Comma-separated column indices for card front (e.g., "0,1")
+     - `back_columns`: Comma-separated column indices for card back (e.g., "2,3")
+     - `tags_column`: Column index for tags (optional)
+     - `has_header`: Whether CSV has header row
+     - `title`: Title for the flashcard set
+     - `description`: Description of the flashcard set
+     - `column_separator`: Separator for multi-column content
+     - `template`: Template type for styling
+     - `theme`: Theme for styling
+   - **Returns**: JSON string of complete flashcard data
 
 4. **validate_flashcard_data**
-   - **Description**: Validate flashcard data format correctness
+   - **Description**: Validate flashcard JSON data structure
+   - **Parameters**: 
+     - `flashcard_json`: Flashcard data in JSON format
+   - **Returns**: Validation result message
    - **Parameters**: 
      - `data`: Flashcard data to validate
    - **Usage**: Check if data structure meets flashcard format requirements
@@ -212,48 +232,22 @@ To use this MCP server with Claude Desktop, add the following configuration to y
 ```json
 {
   "mcpServers": {
-    "flashcard-mcp": {
-      "command": "python",
-      "args": ["/path/to/FlashCardMCP/main.py"],
-      "cwd": "/path/to/FlashCardMCP"
-    }
-  }
-}
-```
-
-Replace `/path/to/FlashCardMCP` with the actual path to your FlashCardMCP directory.
-
-#### Alternative Configuration (using uv)
-
-If you're using UV for Python environment management:
-
-```json
-{
-  "mcpServers": {
-    "flashcard-mcp": {
+    "FlashcardGenerator": {
       "command": "uv",
-      "args": ["run", "python", "main.py"],
-      "cwd": "/path/to/FlashCardMCP"
+      "args": [
+        "run",
+        "--with",
+        "fastmcp",
+        "fastmcp",
+        "run",
+        "/Users/yinlei/Programming/showRoom/FlaskCardMCP/server.py"
+      ]
     }
   }
 }
 ```
 
-#### Available MCP Tools
-
-Once configured, the following tools will be available in Claude Desktop:
-
-- **convert_to_flashcards**: Convert text/JSON data to interactive flashcard HTML
-- **export_pdf**: Export flashcards to PDF format  
-- **upload_csv**: Process CSV files and convert to flashcards
-
-#### Verification
-
-After adding the configuration:
-
-1. Restart Claude Desktop
-2. The FlashCardMCP server should appear in your available tools
-3. You can test by asking Claude to "create flashcards from this content" with any text
+Replace the path with the actual path to your FlashCardMCP directory.
 
 ### Project Structure
 

@@ -1,16 +1,23 @@
 # FlashCardMCP / 闪卡生成MCP服务
 
+**版本: 10.1**
+
 [English](#english) | [中文](#中文)
 
 ---
 
 ## 中文
 
-一个基于 FastMCP 的 MCP 服务，用于将 JSON 格式的 Markdown 内容转换为交互式闪卡页面。
+一个基于 FastMCP 的 MCP 服务，用于将 JSON/CSV 格式的 Markdown 内容转换为交互式闪卡页面。
 
 ### 项目介绍
 
-FlashCardMCP 是一个简单而强大的 MCP 服务，它可以接收包含 Markdown 内容的 JSON 数据，并将其转换为美观、交互式的闪卡页面。这个服务适用于学习、教学和知识管理场景，可以帮助用户创建自己的数字闪卡集。
+
+FlashCardMCP 是一个基于 FastMCP 的 MCP 服务，用于将 JSON/CSV 格式的 Markdown 内容转换为交互式闪卡页面。这个服务适用于学习、教学和知识管理以及任何你想要的场景，可以帮助用户创建自己的数字闪卡集。
+- **专注内容**：使用Markdown格式，符合LLM的输出，让用户专注于内容的输出，而不是格式等其他无关紧要的内容；
+- **稳定输出**：采用函数稳定生成闪卡，支持CSS格式Style输入，满足个性化需求；
+- **场景化模板**： 预制模板用于预设的不同场景，后续会进一步拓展；
+- **PDF输出**：闪卡可打印成PDF（8连卡），进一步满足不同场景下，以及现实多种场景下的使用和记忆。
 
 ### 技术栈
 
@@ -59,49 +66,59 @@ python server.py
 - **模板配置**: 可用模板列表及其描述
 - **路径配置**: 模板目录、静态文件目录等
 
-### 可用的 MCP 工具和资源
+### 可用的MCP工具和资源
 
-服务器通过 MCP 协议暴露以下工具和资源：
+服务器通过MCP协议暴露以下工具和资源：
 
-#### Resources（资源）
+#### 资源
 
-1. **get_flashcard_templates**
-   - **描述**: 获取所有可用的闪卡模板信息
-   - **用法**: 返回模板列表，包含模板名称、文件路径和功能描述
-   - **返回格式**: JSON 格式的模板配置信息
+1. **flashcard-templates**
+   - **URI**：`resource://flashcard-templates`
+   - **描述**：获取所有可用闪卡模板的信息和配置
+   - **返回格式**：JSON格式的模板配置信息
 
-#### Tools（工具）
+#### 工具
 
 1. **create_flashcards_from_json**
-   - **描述**: 从 JSON 数据创建闪卡 HTML 页面
-   - **参数**: 
-     - `data`: 包含闪卡内容的 JSON 数据
-     - `template`: 模板名称（可选，默认为 "default"）
-   - **用法**: 将结构化的闪卡数据转换为交互式 HTML 页面
-   - **返回**: 生成的 HTML 内容
+   - **描述**：从JSON数据创建交互式HTML闪卡
+   - **参数**：
+     - `cards`：闪卡数据列表，包含'front'、'back'和可选的'tags'
+     - `title`：闪卡集标题
+     - `description`：闪卡集描述
+     - `template`：模板类型（'minimal'、'default'、'elegant'）
+     - `theme`：主题（'light'或'dark'）
+   - **返回**：生成的HTML内容字符串
 
 2. **generate_flashcards_pdf**
-   - **描述**: 将闪卡导出为 PDF 文件
-   - **参数**: 
-     - `data`: 闪卡数据
-     - `template`: 模板名称（可选）
-   - **用法**: 生成适合打印的 PDF 格式闪卡
-   - **返回**: PDF 文件的二进制数据
+   - **描述**：从JSON数据生成PDF格式闪卡
+   - **参数**：
+     - `cards`：闪卡数据列表，包含'front'、'back'和可选的'tags'
+     - `title`：闪卡集标题
+     - `description`：闪卡集描述
+     - `layout`：布局类型（'single'或'a4_8'）
+     - `output_path`：保存PDF文件的目录路径
+   - **返回**：成功消息，包含文件路径和大小信息
 
-3. **convert_csv_to_flashcards**
-   - **描述**: 将 CSV 数据转换为闪卡 HTML
-   - **参数**: 
-     - `csv_data`: CSV 格式的数据
-     - `template`: 模板名称（可选）
-   - **用法**: 从表格数据快速创建闪卡
-   - **返回**: 生成的 HTML 内容
+3. **convert_csv_to_json**
+   - **描述**：将CSV内容转换为闪卡JSON格式
+   - **参数**：
+     - `csv_content`：原始CSV内容字符串
+     - `front_columns`：卡片正面的列索引（如"0,1"）
+     - `back_columns`：卡片背面的列索引（如"2,3"）
+     - `tags_column`：标签列索引（可选）
+     - `has_header`：CSV是否有标题行
+     - `title`：闪卡集标题
+     - `description`：闪卡集描述
+     - `column_separator`：多列内容分隔符
+     - `template`：样式模板类型
+     - `theme`：样式主题
+   - **返回**：完整闪卡数据的JSON字符串
 
 4. **validate_flashcard_data**
-   - **描述**: 验证闪卡数据的格式正确性
-   - **参数**: 
-     - `data`: 待验证的闪卡数据
-   - **用法**: 检查数据结构是否符合闪卡格式要求
-   - **返回**: 验证结果和错误信息（如有）
+   - **描述**：验证闪卡JSON数据结构
+   - **参数**：
+     - `flashcard_json`：JSON格式的闪卡数据
+   - **返回**：验证结果消息
 
 ### 闪卡模板功能
 
@@ -153,15 +170,6 @@ python server.py
 - 交互式功能演示
 - 样例数据展示
 - 使用教程和最佳实践
-
-### 可用的 MCP 工具
-
-服务器通过 MCP 协议暴露以下工具： <mcreference link="https://gofastmcp.com/getting-started/quickstart" index="3">3</mcreference>
-
-- **generate_flashcard**: 根据JSON数据生成闪卡HTML页面
-- **validate_flashcard_data**: 验证闪卡数据的有效性
-- **list_flashcard_templates**: 列出可用的闪卡模板
-- **export_flashcards_pdf**: 导出闪卡为PDF格式
 
 ### JSON 数据格式
 
@@ -217,27 +225,22 @@ python server.py
 ```json
 {
   "mcpServers": {
-    "flashcard-mcp": {
-      "command": "python",
-      "args": ["/path/to/FlashCardMCP/main.py"],
-      "cwd": "/path/to/FlashCardMCP"
+    "FlashcardGenerator": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--with",
+        "fastmcp",
+        "fastmcp",
+        "run",
+        "/Users/yinlei/Programming/showRoom/FlaskCardMCP/server.py"
+      ]
     }
   }
 }
 ```
 
-请将 `/path/to/FlashCardMCP` 替换为您的 FlashCardMCP 目录的实际路径。
-
-#### 替代配置（使用 uv）
-
-如果您使用 UV 进行 Python 环境管理：
-
-```json
-{
-  "mcpServers": {
-    "flashcard-mcp": {
-      "command": "uv",
-      "args": ["run", "python", "main.py"],
+请将路径替换为您的 FlashCardMCP 目录的实际路径。
       "cwd": "/path/to/FlashCardMCP"
     }
   }
