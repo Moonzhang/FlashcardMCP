@@ -316,6 +316,40 @@ A: You can modify the `MarkdownParser` class in `src/utils/markdown_parser.py` t
 
 A: `server.py` is a standard MCP server for communication with Claude Desktop and other MCP clients. `src/main.py` is a FastAPI server, mainly used for development testing and Web interface access.
 
+## Output Examples
+
+The project provides various output examples in the `sample/` directory:
+
+### HTML Flashcard Examples
+- **card_template_sample.html**: Complete example of Default template, showcasing fluid grid layout and flip animations
+- **minimal_template_sample.html**: Minimal template example with single-card centered display for focused learning
+- **listen_template_sample.html**: Listen template example supporting voice playback and dictation mode
+
+### PDF Output Examples
+The `sample/pdf_generate/` directory contains PDF flashcard examples for various scenarios:
+- **康奈尔笔记法闪卡_8卡片布局.pdf**: Cornell Note-taking method flashcards
+- **基础测试_8卡片布局.pdf**: Basic knowledge test flashcards
+- **Markdown测试_8卡片布局.pdf**: Markdown syntax support demonstration
+- **词语表闪卡练习_8卡片布局.pdf**: Vocabulary learning flashcards
+- **日文注音测试_8卡片布局.pdf**: Multi-language support example
+
+All PDFs use A4 paper with 8-card layout, suitable for printing and physical use.
+
+## Version History
+
+### Version 10.1 (Current)
+- Updated version information in all README files
+- Corrected MCP tools and resources descriptions to match actual functionality
+- Updated MCP client configuration with correct `uv run` command
+- Improved documentation structure and content
+- Added output examples showcase
+
+### Future Version Plans
+- Add more flashcard templates
+- Optimize voice functionality
+- Add online Demo page
+- Support more export formats
+
 ### License
 
 [GPL License](LICENSE)

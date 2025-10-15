@@ -330,6 +330,40 @@ A: 您可以修改 `src/utils/markdown_parser.py` 文件中的 `MarkdownParser` 
 
 A: `server.py` 是标准的 MCP 服务器，用于与 Claude Desktop 等 MCP 客户端通信。`src/main.py` 是 FastAPI 服务器，主要用于开发测试和 Web 界面访问。
 
+## 输出效果展示
+
+项目在 `sample/` 目录中提供了多种输出效果的示例：
+
+### HTML 闪卡示例
+- **card_template_sample.html**: Default 模板的完整示例，展示流式网格布局和翻转动画效果
+- **minimal_template_sample.html**: Minimal 模板示例，单卡片居中显示，适合专注学习
+- **listen_template_sample.html**: Listen 模板示例，支持语音播放和听写模式
+
+### PDF 输出示例
+`sample/pdf_generate/` 目录包含多种场景的PDF闪卡示例：
+- **康奈尔笔记法闪卡_8卡片布局.pdf**: 学习方法类闪卡
+- **基础测试_8卡片布局.pdf**: 基础知识测试闪卡
+- **Markdown测试_8卡片布局.pdf**: Markdown语法支持演示
+- **词语表闪卡练习_8卡片布局.pdf**: 词汇学习闪卡
+- **日文注音测试_8卡片布局.pdf**: 多语言支持示例
+
+所有PDF采用A4纸8卡片布局，适合打印和实体使用。
+
+## 版本记录
+
+### Version 10.1 (当前版本)
+- 更新了所有README文件中的版本信息
+- 修正了MCP工具和资源的描述，确保与实际功能一致
+- 更新了MCP客户端配置，使用正确的`uv run`命令
+- 完善了文档结构和内容
+- 增加了输出效果展示模块
+
+### 未来版本计划
+- 增加更多闪卡模板
+- 优化语音功能
+- 添加在线Demo页面
+- 支持更多导出格式
+
 ### 许可证
 
 [GPL License](LICENSE)

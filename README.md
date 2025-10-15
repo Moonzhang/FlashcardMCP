@@ -103,6 +103,25 @@ FlashCardMCP 是一个基于 FastMCP 的 MCP 服务，用于将 JSON/CSV 格式�
 - 支持语音播放和听写模式
 - 适合语言学习和语音复习
 
+## 输出效果展示
+
+项目在 `sample/` 目录中提供了多种输出效果的示例：
+
+### HTML 闪卡示例
+- **card_template_sample.html**: Default 模板的完整示例，展示流式网格布局和翻转动画效果
+- **minimal_template_sample.html**: Minimal 模板示例，单卡片居中显示，适合专注学习
+- **listen_template_sample.html**: Listen 模板示例，支持语音播放和听写模式
+
+### PDF 输出示例
+`sample/pdf_generate/` 目录包含多种场景的PDF闪卡示例：
+- **康奈尔笔记法闪卡_8卡片布局.pdf**: 学习方法类闪卡
+- **基础测试_8卡片布局.pdf**: 基础知识测试闪卡
+- **Markdown测试_8卡片布局.pdf**: Markdown语法支持演示
+- **词语表闪卡练习_8卡片布局.pdf**: 词汇学习闪卡
+- **日文注音测试_8卡片布局.pdf**: 多语言支持示例
+
+所有PDF采用A4纸8卡片布局，适合打印和实体使用。
+
 ## Demo 页面
 
 > **注意**: Demo 页面功能正在开发中，将在后续版本中提供在线演示。
@@ -130,6 +149,20 @@ MCP 服务器默认使用 STDIO 传输协议，与 Claude Desktop 等 MCP 客户
 ```bash
 python server.py
 ```
+
+## 版本记录
+
+### Version 10.1 (当前版本)
+- 更新了所有README文件中的版本信息
+- 修正了MCP工具和资源的描述，确保与实际功能一致
+- 更新了MCP客户端配置，使用正确的`uv run`命令
+- 完善了文档结构和内容
+
+### 未来版本计划
+- 增加更多闪卡模板
+- 优化语音功能
+- 添加在线Demo页面
+- 支持更多导出格式
 
 ## 许可证
 
