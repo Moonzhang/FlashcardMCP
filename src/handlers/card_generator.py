@@ -142,15 +142,34 @@ def render_flashcard_template(title, description, cards, template='minimal', sty
         else:
             print(f"🔍 [DEBUG] Template file does not exist: {template_path}")
     
-    # 如果没有找到模板文件，检查是否有其他可用的模板文件
+    # 如果仍然没有找到模板，使用 'default' 模板
     if not template_content:
-        print(f"🔍 [DEBUG] Template '{template}' not found in configuration, checking available templates")
-        # 不再尝试直接查找 template.html，因为这会导致配置不一致
+        print(f"🔍 [DEBUG] No template file found, defaulting to 'default' template")
+        template = 'default' # 强制使用 default 模板
+        template_config = available_templates.get(template, {})
+        if isinstance(template_config, dict):
+            template_file = template_config.get('file_path')
+        else:
+            template_file = template_config
+        
+        if template_file:
+            template_path = os.path.join(_template_dir, template_file)
+            print(f"🔍 [DEBUG] Trying to load default template from: {template_path}")
+            if os.path.exists(template_path):
+                try:
+                    with open(template_path, 'r', encoding='utf-8') as f:
+                        template_content = f.read()
+                    print(f"🔍 [DEBUG] Successfully loaded default template from {template_path}")
+                except Exception as e:
+                    print(f"🔍 [DEBUG] Failed to load default template from {template_path}: {e}")
+            else:
+                print(f"🔍 [DEBUG] Default template file does not exist: {template_path}")
+        else:
+            print(f"🔍 [DEBUG] Default template file path not found in config.")
     
-    # 如果仍然没有找到模板，使用内联模板
+    # 如果还是没有找到模板内容，抛出异常
     if not template_content:
-        print(f"🔍 [DEBUG] No template file found, using inline template")
-        template_content = get_inline_template()
+        raise ValueError(f"No template found for '{template}' and default template is also unavailable")
 
     # 初始化 style_params
     if style_params is None:
@@ -313,262 +332,3 @@ def render_flashcard_template(title, description, cards, template='minimal', sty
     print(f"🔍 [DEBUG] Rendered HTML preview (first 200 chars): {rendered_html[:200]}")
     
     return rendered_html
-
-def get_inline_template():
-    """
-    提供内联的默认闪卡 HTML 模板内容。
-
-    Provides inline default flashcard HTML template content.
-
-    Returns:
-        str: 包含默认 HTML 模板的字符串。
-             String containing the default HTML template.
-    """
-    return '''<!DOCTYPE html>
-            <html lang="zh-CN">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>{{ title }}</title>
-                <meta name="description" content="{{ description }}">
-                <style>
-                    /* theme: {{ theme }} */
-                    /* font: {{ font_family }} */
-                    :root {
-                        --primary-color: {{ primary_color }};
-                        --secondary-color: {{ secondary_color }};
-                        --background-color: {{ background_color }};
-                        --text-color: {{ text_color }};
-                        --card-bg: {{ card_bg }};
-                        --card-front-bg: {{ card_front_bg }};
-                        --card-back-bg: {{ card_back_bg }};
-                        --card-border: {{ card_border }};
-                        --card-border-radius: {{ card_border_radius }};
-                        --card-padding: {{ card_padding }};
-                        --card-box-shadow: {{ card_box_shadow }};
-                        --font-family: {{ font_family }};
-                        --font-css: {{ font_css }};
-                        --card-front-font: {{ card_front_font }};
-                        --card-back-font: {{ card_back_font }};
-                        --card-width: {{ card_width }};
-                        --card-height: {{ card_height }};
-                        --card-front-text-align: {{ card_front_text_align }};
-                        --card-back-text-align: {{ card_back_text_align }};
-                    }
-                    
-                    * {
-                        box-sizing: border-box;
-                        margin: 0;
-                        padding: 0;
-                    }
-                    
-                    body {
-                        font-family: var(--font-family);
-                        background-color: var(--background-color);
-                        color: var(--text-color);
-                        line-height: 1.6;
-                        padding: 20px;
-                        font-size: var(--font-size);
-                    }
-                    
-                    .container {
-                        max-width: 1200px;
-                        margin: 0 auto;
-                    }
-                    
-                    header {
-                        text-align: center;
-                        margin-bottom: 30px;
-                        padding: 20px;
-                        border-bottom: 1px solid var(--card-border);
-                    }
-                    
-                    h1 {
-                        color: var(--primary-color);
-                        margin-bottom: 10px;
-                    }
-                    
-                    .flashcard-grid {
-                        display: grid;
-                        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-                        gap: 20px;
-                        margin-bottom: 30px;
-                    }
-                    
-                    .card {
-                        width: var(--card-width);
-                        height: var(--card-height);
-                        perspective: 1000px;
-                        cursor: pointer;
-                    }
-                    
-                    .card-inner {
-                        position: relative;
-                        width: 100%;
-                        height: 100%;
-                        text-align: center;
-                        transition: transform 0.6s;
-                        transform-style: preserve-3d;
-                        box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
-                        border-radius: 8px;
-                    }
-                    
-                    .card.flipped .card-inner {
-                        transform: rotateY(180deg);
-                    }
-                    
-                    .card-front, .card-back {
-                        position: absolute;
-                        width: 100%;
-                        height: 100%;
-                        -webkit-backface-visibility: hidden;
-                        backface-visibility: hidden;
-                        padding: 20px;
-                        overflow-y: auto;
-                        background-color: var(--card-front-bg);
-                        border: 1px solid var(--card-border);
-                        border-radius: 8px;
-                        display: flex;
-                        flex-direction: column;
-                        justify-content: center;
-                        align-items: center;
-                        background-image: var(--card-front-image);
-                        background-size: cover;
-                        background-position: center;
-                    }
-                    
-                    .card-back {
-                        transform: rotateY(180deg);
-                        background-color: var(--card-back-bg);
-                        background-image: var(--card-back-image);
-                    }
-                    
-                    .card-content {
-                        max-height: 100%;
-                        overflow-y: auto;
-                        width: 100%;
-                        font-size: var(--font-size);
-                    }
-                    
-                    .card-front .card-content {
-                        text-align: var(--card-front-text-align);
-                        font-size: var(--front-font-size);
-                    }
-                    
-                    .card-back .card-content {
-                        text-align: var(--card-back-text-align);
-                        font-size: var(--back-font-size);
-                    }
-                    
-                    .card-tags {
-                        display: flex;
-                        flex-wrap: wrap;
-                        gap: 5px;
-                        margin-top: 10px;
-                        justify-content: center;
-                    }
-                    
-                    .card-tag {
-                        background-color: var(--secondary-color);
-                        color: white;
-                        padding: 2px 8px;
-                        border-radius: 12px;
-                        font-size: 0.8em;
-                    }
-                    
-                    .card-controls {
-                        display: flex;
-                        justify-content: center;
-                        gap: 10px;
-                        margin-bottom: 20px;
-                        flex-wrap: wrap;
-                    }
-                    
-                    button {
-                        background-color: var(--primary-color);
-                        color: white;
-                        border: none;
-                        padding: 8px 16px;
-                        border-radius: 4px;
-                        cursor: pointer;
-                        font-family: inherit;
-                    }
-                    
-                    button:hover {
-                        opacity: 0.8;
-                    }
-                    
-                    /* 响应式设计 */
-                    @media (max-width: 768px) {
-                        .flashcard-grid {
-                            grid-template-columns: 1fr;
-                        }
-                        
-                        .card {
-                            height: 200px;
-                        }
-                    }
-                </style>
-                {% if font_css %}
-                <style>
-                    @import url('{{ font_css }}');
-                </style>
-                {% endif %}
-            </head>
-            <body>
-                <h1>{{ title }}</h1>
-                {% if description_section %}
-                <div class="description-section">
-                    {{ description_section }}
-                </div>
-                {% endif %}
-                {% if filter_section %}
-                <div class="filter-section">
-                    {{ filter_section }}
-                </div>
-                {% endif %}
-                <div class="container">
-                    <div class="flashcard-grid">
-                        {% for card in cards %}
-                        <div class="card" id="{{ card.id }}" data-tags="{{ card.tags | join(',') }}">
-                            <div class="card-inner">
-                                <div class="card-front">
-                                    <div class="deck-name">{{ deck_name }}</div>
-                                     <div class="card-content">
-                                        {{ card.front }}
-                                    </div>
-                                    {% if card.tags %}
-                                    <div class="card-tags">
-                                        {% for tag in card.tags %}
-                                        <span class="card-tag">{{ tag }}</span>
-                                        {% endfor %}
-                                    </div>
-                                    {% endif %}
-                                </div>
-                                <div class="card-back">
-                                    <div class="card-content">
-                                        {{ card.back }}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-                
-                <script>
-                    // 页面加载完成后执行
-                    document.addEventListener('DOMContentLoaded', function() {
-                        // 获取DOM元素
-                        const cards = document.querySelectorAll('.card');
-                        
-                        // 为所有卡片添加翻转功能
-                        cards.forEach(card => {
-                            card.addEventListener('click', function() {
-                                this.classList.toggle('flipped');
-                            });
-                        });
-                    });
-                </script>
-            </body>
-            </html>'''

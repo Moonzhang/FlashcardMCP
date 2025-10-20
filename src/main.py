@@ -71,10 +71,10 @@ async def preview(dataset: str = "all", template: str = "minimal"):
                 dict: Dictionary containing default flashcard data.
             """
             return {
-                "metadata": {"title": "预览闪卡集", "description": "示例数据生成的闪卡页面"},
+                "metadata": {"title": "Preview_dataset", "description": "preview dataset page show"},
                 "style": {"template": template, "theme": "light"},
                 "cards": [
-                    {"front": "问题", "back": "答案", "tags": ["示例"]}
+                    {"front": "Question/问题", "back": "Answer/答案", "tags": ["Preview"]}
                 ]
             }
 

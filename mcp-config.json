@@ -1,10 +1,14 @@
 {
   "mcpServers": {
-    "FlashcardMCP": {
+    "FlashcardGenerator": {
       "command": "uv",
       "args": [
         "run",
-        "/pathway/to/FlashCardMCP/server.py"
+        "--with",
+        "fastmcp",
+        "fastmcp",
+        "run",
+        "/Users/yinlei/Programming/showRoom/FlaskCardMCP/server.py"
       ]
     }
   }

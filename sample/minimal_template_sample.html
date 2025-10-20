@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlashCard</title>
+    <meta name="description" content="">
+    <style>
+        /* CSS Variables */
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --background-color: #ffffff;
+            --text-color: #333333;
+            --card-front-bg: #ffffff;
+            --card-back-bg: #f5f5f5;
+            --card-border: 1px solid #dddddd;
+            --card-border-radius: 8px;
+            --card-padding: 20px;
+            --card-box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            --font-family: Arial, sans-serif;
+            --font-css: Arial, sans-serif;
+            --card-front-font: 24px/1.2 Arial, sans-serif;
+            --card-back-font: 18px/1.2 Arial, sans-serif;
+        }
+
+        /* Basic Resets */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: var(--font-family); background: var(--background-color); color: var(--text-color); padding: 16px; }
+
+        /* SHARED CARD STYLES */
+        .card { width: 74.25mm; height: 105mm; perspective: 1000px; cursor: pointer; position: relative; }
+        .card.flipped .card-inner { transform: rotateY(180deg); }
+        .card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; border-radius: var(--card-border-radius); box-shadow: var(--card-box-shadow); }
+
+        .card-front, .card-back {
+            position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+            padding: var(--card-padding); border: var(--card-border); border-radius: var(--card-border-radius); display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .card-front { background: var(--card-front-bg); font: var(--card-front-font); }
+        .card-back { transform: rotateY(180deg); background: var(--card-back-bg); font: var(--card-back-font); }
+
+        .deck-name { position: absolute; top: 8px; left: 8px; font-size: 0.75em; font-weight: 500; color: var(--text-color); opacity: 0.7; pointer-events: none; z-index: 10; }
+        .card-index { position: absolute; bottom: 8px; right: 8px; font-size: 0.7em; font-weight: 500; color: var(--text-color); opacity: 0.6; pointer-events: none; z-index: 10; }
+        .card-content { max-height: 100%; overflow: auto; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; text-align: center; gap: 8px; }
+        .card-back { justify-content: center; align-items: center; padding-top: 24px; }
+        .card-back .card-content { width: 100%; max-width: 90%; margin: 0 auto; align-items: flex-start; text-align: left; }
+        .card-content img { display: block; max-width: 100%; max-height: 85%; height: auto; width: auto; object-fit: contain; margin-bottom: 4px; }
+        .card-content audio { width: 100%; margin-top: 8px; }
+        .card-content p, .card-content ul, .card-content ol, .card-content blockquote { margin: 4px 0 0; }
+        .card-content ul { list-style-type: disc; list-style-position: outside; padding-left: 1.25em; margin-left: 0.25em; }
+        .card-content ol { list-style-type: decimal; list-style-position: outside; padding-left: 1.25em; margin-left: 0.25em; }
+        .card-content li { margin: 3px 0; }
+        .card-content table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+        .card-content th, .card-content td { border: 1px solid var(--card-border); padding: 6px 8px; text-align: left; }
+        .card-content thead th { background: rgba(0,0,0,0.06); }
+        .card-front .card-content:has(> img:only-child),
+        .card-front .card-content:has(> p:only-child > img:only-child) { padding: 0; width: 100%; height: 100%; }
+        .card-front .card-content img:only-child,
+        .card-front .card-content p:only-child > img:only-child { width: 100%; height: 100%; max-height: 100%; object-fit: cover; margin: 0; }
+        .card-tags, .card-tag { display: none !important; }
+    </style>
+    
+    <style>
+        /* Styles for minimal.html layout */
+        .container { max-width: 800px; margin: 0 auto; }
+        header { text-align: center; margin-bottom: 30px; }
+        header h1 { color: var(--primary-color); margin-bottom: 10px; font-size: 2.5em; }
+        header p { font-size: 1.1em; opacity: 0.8; }
+        .flashcard-grid { display: block; }
+        .card { margin: 0 auto; display: none; }
+        .card.active { display: block; }
+
+        @media print {
+            body { padding: 0; }
+            .card { break-inside: avoid; page-break-inside: avoid; }
+            .card-inner { transform: none !important; box-shadow: none; }
+            .card-front, .card-back { position: relative; border: 1px solid #000; }
+            .card-back { border: 2px solid #000; }
+        }
+    </style>
+    
+</head>
+<body>
+    
+    <div class="container">
+        <div class="flashcard-grid" id="cardGrid">
+        
+        <div class="card" id="card-1" data-tags="">
+            <div class="card-inner">
+                <div class="card-front">
+                    <div class="deck-name">FlashCard</div>
+                    <div class="card-index">1/3</div>
+                    <div class="card-content">
+                        <p>什么是 MCP?</p>
+                    </div>
+                    
+                </div>
+                <div class="card-back">
+                    <div class="card-index">1/3</div>
+                    <div class="card-content">
+                        <p>MCP 是一种模块化的计算协议，用于构建可组合的服务和应用。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card" id="card-2" data-tags="">
+            <div class="card-inner">
+                <div class="card-front">
+                    <div class="deck-name">FlashCard</div>
+                    <div class="card-index">2/3</div>
+                    <div class="card-content">
+                        <p>FastMCP 的主要特点是什么?</p>
+                    </div>
+                    
+                </div>
+                <div class="card-back">
+                    <div class="card-index">2/3</div>
+                    <div class="card-content">
+                        <p>FastMCP 是一个快速、轻量级的 MCP 框架，支持异步处理、路由配置和中间件功能。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card" id="card-3" data-tags="">
+            <div class="card-inner">
+                <div class="card-front">
+                    <div class="deck-name">FlashCard</div>
+                    <div class="card-index">3/3</div>
+                    <div class="card-content">
+                        <p>如何安装 FastMCP?</p>
+                    </div>
+                    
+                </div>
+                <div class="card-back">
+                    <div class="card-index">3/3</div>
+                    <div class="card-content">
+                        <p>可以通过 pip 安装: pip install fastmcp</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    
+    
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const cards = Array.from(document.querySelectorAll('.card'))
+        let currentCardIndex = 0
+
+        // 显示指定索引的卡片
+        function showOnlyIndex(index) {
+            const total = cards.length
+            currentCardIndex = ((index % total) + total) % total // 确保索引在有效范围内
+            cards.forEach((card, i) => {
+                if (i === currentCardIndex) {
+                    card.classList.add('active')
+                } else {
+                    card.classList.remove('active')
+                }
+            })
+        }
+
+        // 初始化显示第一张卡片
+        showOnlyIndex(0)
+
+        // 点击翻转
+        cards.forEach(card => {
+            card.addEventListener('click', () => card.classList.toggle('flipped'))
+        })
+
+        // 键盘导航
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') {
+                showOnlyIndex(currentCardIndex + 1)
+            } else if (e.key === 'ArrowLeft') {
+                showOnlyIndex(currentCardIndex - 1)
+            }
+        })
+    })
+    </script>
+    
+</body>
+</html>

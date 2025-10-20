@@ -1,8 +1,66 @@
-{% extends "minimal.html" %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlashCard</title>
+    <meta name="description" content="">
+    <style>
+        /* CSS Variables */
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --background-color: #ffffff;
+            --text-color: #333333;
+            --card-front-bg: #ffffff;
+            --card-back-bg: #f5f5f5;
+            --card-border: 1px solid #dddddd;
+            --card-border-radius: 8px;
+            --card-padding: 20px;
+            --card-box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            --font-family: Arial, sans-serif;
+            --font-css: Arial, sans-serif;
+            --card-front-font: 24px/1.2 Arial, sans-serif;
+            --card-back-font: 18px/1.2 Arial, sans-serif;
+        }
 
-{% block title %}{{ title }}{% endblock %}
+        /* Basic Resets */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: var(--font-family); background: var(--background-color); color: var(--text-color); padding: 16px; }
 
-{% block page_styles %}
+        /* SHARED CARD STYLES */
+        .card { width: 74.25mm; height: 105mm; perspective: 1000px; cursor: pointer; position: relative; }
+        .card.flipped .card-inner { transform: rotateY(180deg); }
+        .card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; border-radius: var(--card-border-radius); box-shadow: var(--card-box-shadow); }
+
+        .card-front, .card-back {
+            position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+            padding: var(--card-padding); border: var(--card-border); border-radius: var(--card-border-radius); display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .card-front { background: var(--card-front-bg); font: var(--card-front-font); }
+        .card-back { transform: rotateY(180deg); background: var(--card-back-bg); font: var(--card-back-font); }
+
+        .deck-name { position: absolute; top: 8px; left: 8px; font-size: 0.75em; font-weight: 500; color: var(--text-color); opacity: 0.7; pointer-events: none; z-index: 10; }
+        .card-index { position: absolute; bottom: 8px; right: 8px; font-size: 0.7em; font-weight: 500; color: var(--text-color); opacity: 0.6; pointer-events: none; z-index: 10; }
+        .card-content { max-height: 100%; overflow: auto; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; text-align: center; gap: 8px; }
+        .card-back { justify-content: center; align-items: center; padding-top: 24px; }
+        .card-back .card-content { width: 100%; max-width: 90%; margin: 0 auto; align-items: flex-start; text-align: left; }
+        .card-content img { display: block; max-width: 100%; max-height: 85%; height: auto; width: auto; object-fit: contain; margin-bottom: 4px; }
+        .card-content audio { width: 100%; margin-top: 8px; }
+        .card-content p, .card-content ul, .card-content ol, .card-content blockquote { margin: 4px 0 0; }
+        .card-content ul { list-style-type: disc; list-style-position: outside; padding-left: 1.25em; margin-left: 0.25em; }
+        .card-content ol { list-style-type: decimal; list-style-position: outside; padding-left: 1.25em; margin-left: 0.25em; }
+        .card-content li { margin: 3px 0; }
+        .card-content table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+        .card-content th, .card-content td { border: 1px solid var(--card-border); padding: 6px 8px; text-align: left; }
+        .card-content thead th { background: rgba(0,0,0,0.06); }
+        .card-front .card-content:has(> img:only-child),
+        .card-front .card-content:has(> p:only-child > img:only-child) { padding: 0; width: 100%; height: 100%; }
+        .card-front .card-content img:only-child,
+        .card-front .card-content p:only-child > img:only-child { width: 100%; height: 100%; max-height: 100%; object-fit: cover; margin: 0; }
+        .card-tags, .card-tag { display: none !important; }
+    </style>
+    
 <style>
     /* 页面整体样式优化 - 继承minimal.html的卡片样式 */
     body {
@@ -229,24 +287,149 @@
         }
     }
 </style>
-{% endblock %}
 
-{% block body_content %}
+</head>
+<body>
+    
 <div class="container">
     <header>
-        <h1>{{ title }}</h1>
+        <h1>FlashCard</h1>
     </header>
 
     <main>
         <!-- 闪卡网格 -->
         <div class="flashcard-grid" id="cardGrid">
-            {{ cards_html | safe }}
+            
+        <div class="card" id="card-0" data-tags="">
+            <div class="card-inner">
+                <div class="card-front">
+                    <div class="deck-name">FlashCard</div>
+                    <div class="card-content"><h1>Markdown 标题</h1></div>
+                    
+                </div>
+                <div class="card-back">
+                    <div class="card-content"><h1>这是一级标题</h1>
+<h2>这是二级标题</h2>
+<h3>这是三级标题</h3></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card" id="card-1" data-tags="">
+            <div class="card-inner">
+                <div class="card-front">
+                    <div class="deck-name">FlashCard</div>
+                    <div class="card-content"><p><strong>Markdown 文本格式化</strong></p></div>
+                    
+                </div>
+                <div class="card-back">
+                    <div class="card-content"><p>这是<strong>粗体</strong>文本，这是<em>斜体</em>文本，这是<strong><em>粗斜体</em></strong>文本。</p>
+<p>这是~~删除线~~文本。</p></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card" id="card-2" data-tags="">
+            <div class="card-inner">
+                <div class="card-front">
+                    <div class="deck-name">FlashCard</div>
+                    <div class="card-content"><p>Markdown 列表</p></div>
+                    
+                </div>
+                <div class="card-back">
+                    <div class="card-content"><h3>无序列表</h3>
+<ul>
+<li>项目 1</li>
+<li>项目 2</li>
+<li>项目 3</li>
+</ul>
+<h3>有序列表</h3>
+<ol>
+<li>第一项</li>
+<li>第二项</li>
+<li>第三项</li>
+</ol></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card" id="card-3" data-tags="">
+            <div class="card-inner">
+                <div class="card-front">
+                    <div class="deck-name">FlashCard</div>
+                    <div class="card-content"><p>Markdown 代码</p></div>
+                    
+                </div>
+                <div class="card-back">
+                    <div class="card-content"><pre><code class="language-python"> # 这是 Python 代码示例
+def hello():
+    print('Hello, World!')
+
+hello()
+</code></pre>
+<p>这是行内代码: <code>print('Hello')</code></p></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card" id="card-4" data-tags="">
+            <div class="card-inner">
+                <div class="card-front">
+                    <div class="deck-name">FlashCard</div>
+                    <div class="card-content"><p>Markdown 表格</p></div>
+                    
+                </div>
+                <div class="card-back">
+                    <div class="card-content"><table>
+<thead>
+<tr>
+<th>名称</th>
+<th>描述</th>
+<th>数量</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>项目1</td>
+<td>第一个项目</td>
+<td>10</td>
+</tr>
+<tr>
+<td>项目2</td>
+<td>第二个项目</td>
+<td>20</td>
+</tr>
+<tr>
+<td>项目3</td>
+<td>第三个项目</td>
+<td>30</td>
+</tr>
+</tbody>
+</table></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card" id="card-5" data-tags="">
+            <div class="card-inner">
+                <div class="card-front">
+                    <div class="deck-name">FlashCard</div>
+                    <div class="card-content"><p>Markdown 链接和图片</p></div>
+                    
+                </div>
+                <div class="card-back">
+                    <div class="card-content"><p>这是一个<a href="https://baike.baidu.com/item/%E6%B4%9B%E5%BF%85%E8%BE%BE%E6%B3%95%E5%88%99/7646700">链接示例</a></p>
+<p><img src="https://pics3.baidu.com/feed/8435e5dde71190efb7ebdcd672a00f06fcfa60f7.jpeg" alt="图片示例" / /></p></div>
+                </div>
+            </div>
+        </div>
+        
         </div>
     </main>
 </div>
-{% endblock %}
 
-{% block scripts %}
+    
+    
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const cards = document.querySelectorAll('.card');
@@ -331,4 +514,6 @@
         });
     });
 </script>
-{% endblock %}
+
+</body>
+</html>

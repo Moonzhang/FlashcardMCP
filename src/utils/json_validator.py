@@ -190,5 +190,13 @@ def normalize_json_data(json_data: Dict[str, Any]) -> Dict[str, Any]:
     for i, card in enumerate(flashcard_data.cards):
         if card.id is None:
             card.id = f"card-{i + 1}"
+    
+    # 使用自定义序列化处理datetime对象
+    result = flashcard_data.model_dump(exclude_unset=False)
+    
+    # 处理datetime序列化
+    if result.get('metadata') and result['metadata'].get('created_at'):
+        if isinstance(result['metadata']['created_at'], datetime):
+            result['metadata']['created_at'] = result['metadata']['created_at'].isoformat()
             
-    return flashcard_data.model_dump(exclude_unset=False)
+    return result

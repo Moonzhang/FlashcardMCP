@@ -327,12 +327,6 @@ The project provides various output examples in the `sample/` directory:
 
 ### PDF Output Examples
 The `sample/pdf_generate/` directory contains PDF flashcard examples for various scenarios:
-- **康奈尔笔记法闪卡_8卡片布局.pdf**: Cornell Note-taking method flashcards
-- **基础测试_8卡片布局.pdf**: Basic knowledge test flashcards
-- **Markdown测试_8卡片布局.pdf**: Markdown syntax support demonstration
-- **词语表闪卡练习_8卡片布局.pdf**: Vocabulary learning flashcards
-- **日文注音测试_8卡片布局.pdf**: Multi-language support example
-
 All PDFs use A4 paper with 8-card layout, suitable for printing and physical use.
 
 ## Version History
@@ -348,7 +342,6 @@ All PDFs use A4 paper with 8-card layout, suitable for printing and physical use
 - Add more flashcard templates
 - Optimize voice functionality
 - Add online Demo page
-- Support more export formats
 
 ### License
 

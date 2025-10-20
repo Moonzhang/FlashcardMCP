@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>听写卡片 - JP test</title>
+    <meta name="description" content="包含日文与对应中文解释，日文显示 ruby 注音">
+    <style>
+        /* CSS Variables */
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --background-color: #ffffff;
+            --text-color: #333333;
+            --card-front-bg: #ffffff;
+            --card-back-bg: #f5f5f5;
+            --card-border: 1px solid #dddddd;
+            --card-border-radius: 8px;
+            --card-padding: 20px;
+            --card-box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            --font-family: Arial, sans-serif;
+            --font-css: Arial, sans-serif;
+            --card-front-font: 24px/1.2 Arial, sans-serif;
+            --card-back-font: 18px/1.2 Arial, sans-serif;
+        }
+
+        /* Basic Resets */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: var(--font-family); background: var(--background-color); color: var(--text-color); padding: 16px; }
+
+        /* SHARED CARD STYLES */
+        .card { width: 74.25mm; height: 105mm; perspective: 1000px; cursor: pointer; position: relative; }
+        .card.flipped .card-inner { transform: rotateY(180deg); }
+        .card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; border-radius: var(--card-border-radius); box-shadow: var(--card-box-shadow); }
+
+        .card-front, .card-back {
+            position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+            padding: var(--card-padding); border: var(--card-border); border-radius: var(--card-border-radius); display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .card-front { background: var(--card-front-bg); font: var(--card-front-font); }
+        .card-back { transform: rotateY(180deg); background: var(--card-back-bg); font: var(--card-back-font); }
+
+        .deck-name { position: absolute; top: 8px; left: 8px; font-size: 0.75em; font-weight: 500; color: var(--text-color); opacity: 0.7; pointer-events: none; z-index: 10; }
+        .card-index { position: absolute; bottom: 8px; right: 8px; font-size: 0.7em; font-weight: 500; color: var(--text-color); opacity: 0.6; pointer-events: none; z-index: 10; }
+        .card-content { max-height: 100%; overflow: auto; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; text-align: center; gap: 8px; }
+        .card-back { justify-content: center; align-items: center; padding-top: 24px; }
+        .card-back .card-content { width: 100%; max-width: 90%; margin: 0 auto; align-items: flex-start; text-align: left; }
+        .card-content img { display: block; max-width: 100%; max-height: 85%; height: auto; width: auto; object-fit: contain; margin-bottom: 4px; }
+        .card-content audio { width: 100%; margin-top: 8px; }
+        .card-content p, .card-content ul, .card-content ol, .card-content blockquote { margin: 4px 0 0; }
+        .card-content ul { list-style-type: disc; list-style-position: outside; padding-left: 1.25em; margin-left: 0.25em; }
+        .card-content ol { list-style-type: decimal; list-style-position: outside; padding-left: 1.25em; margin-left: 0.25em; }
+        .card-content li { margin: 3px 0; }
+        .card-content table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+        .card-content th, .card-content td { border: 1px solid var(--card-border); padding: 6px 8px; text-align: left; }
+        .card-content thead th { background: rgba(0,0,0,0.06); }
+        .card-front .card-content:has(> img:only-child),
+        .card-front .card-content:has(> p:only-child > img:only-child) { padding: 0; width: 100%; height: 100%; }
+        .card-front .card-content img:only-child,
+        .card-front .card-content p:only-child > img:only-child { width: 100%; height: 100%; max-height: 100%; object-fit: cover; margin: 0; }
+        .card-tags, .card-tag { display: none !important; }
+    </style>
+    
+
+    <style>
+        /* Styles for minimal.html layout */
+        .container { max-width: 800px; margin: 0 auto; }
+        header { text-align: center; margin-bottom: 30px; }
+        header h1 { color: var(--primary-color); margin-bottom: 10px; font-size: 2.5em; }
+        header p { font-size: 1.1em; opacity: 0.8; }
+        .flashcard-grid { display: block; }
+        .card { margin: 0 auto; display: none; }
+        .card.active { display: block; }
+
+        @media print {
+            body { padding: 0; }
+            .card { break-inside: avoid; page-break-inside: avoid; }
+            .card-inner { transform: none !important; box-shadow: none; }
+            .card-front, .card-back { position: relative; border: 1px solid #000; }
+            .card-back { border: 2px solid #000; }
+        }
+    </style>
+    
+<style>
+    /* 页面整体布局 */
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+    }
+
+    .main-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(10px);
+        margin-top: 20px;
+        margin-bottom: 20px;
+        min-height: calc(100vh - 40px);
+    }
+
+    /* 页面标题区域 */
+    .page-header {
+        text-align: center;
+        margin-bottom: 30px;
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        color: white;
+    }
+
+    .page-header h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .page-header .date-info {
+        font-size: 1rem;
+        opacity: 0.9;
+        margin-bottom: 5px;
+    }
+
+    .page-header .card-count {
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+
+    /* 设置面板 */
+    .settings-panel {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 25px;
+        border: 1px solid #e9ecef;
+    }
+
+    .settings-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 15px;
+        color: #495057;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .settings-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+    }
+
+    .setting-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .setting-group label {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #6c757d;
+    }
+
+    .setting-group select,
+    .setting-group input[type="number"] {
+        padding: 8px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        background: white;
+    }
+
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 5px;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+    }
+
+    /* 卡片显示区域 */
+    .card-display-area {
+        display: flex;
+        gap: 30px;
+        align-items: flex-start;
+    }
+
+    .card-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        min-height: 400px;
+        position: relative;
+        gap: 20px;
+    }
+
+    .flashcard-grid {
+        display: block;
+        width: 100%;
+        max-width: 400px;
+    }
+
+    .card {
+        margin: 0 auto;
+        display: none;
+        width: 74.25mm;
+        height: 105mm;
+    }
+
+    .card.active {
+        display: block;
+    }
+
+    /* 卡片标记面板 */
+    .marking-panel {
+        width: 250px;
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 20px;
+        border: 1px solid #e9ecef;
+        height: fit-content;
+    }
+
+    .marking-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 15px;
+        color: #495057;
+        text-align: center;
+    }
+
+    .marking-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .mark-button {
+        padding: 12px 16px;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .mark-button.familiar {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        color: white;
+    }
+
+    .mark-button.vague {
+        background: linear-gradient(135deg, #ffc107, #fd7e14);
+        color: white;
+    }
+
+    .mark-button.forgotten {
+        background: linear-gradient(135deg, #dc3545, #e83e8c);
+        color: white;
+    }
+
+    .mark-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .progress-info {
+        margin-top: 20px;
+        padding: 15px;
+        background: white;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+    }
+
+    .progress-info h4 {
+        font-size: 0.9rem;
+        margin-bottom: 10px;
+        color: #495057;
+    }
+
+    .progress-stats {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        font-size: 0.8rem;
+    }
+
+    .stat-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .stat-color {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 5px;
+    }
+
+    /* 控制按钮区域 */
+    .listen-controls {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 12px 24px;
+        border-radius: 30px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .listen-controls button {
+        padding: 10px 18px;
+        font-size: 0.9em;
+        font-weight: 500;
+        border: none;
+        border-radius: 22px;
+        cursor: pointer;
+        background: linear-gradient(135deg, var(--primary-color), #2980b9);
+        color: white;
+        transition: all 0.3s ease;
+        min-width: 90px;
+        box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+    }
+
+    .listen-controls button:hover {
+        background: linear-gradient(135deg, #2980b9, #1f5f8b);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+    }
+
+    /* 导出按钮 */
+    .export-button {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 10px 20px;
+        background: linear-gradient(135deg, #28a745, #20c997);
+        color: white;
+        border: none;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        z-index: 1000;
+    }
+
+    .export-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+    }
+
+    /* 听写状态指示 */
+    .listen-status {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.85);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 25px;
+        font-size: 1em;
+        font-weight: 500;
+        display: none;
+        z-index: 100;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .card.listening .card-content {
+        opacity: 0.2;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+    }
+
+    .card.listening .listen-status {
+        display: block;
+        animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+        .main-container {
+            margin: 10px;
+            padding: 15px;
+        }
+
+        .card-display-area {
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .marking-panel {
+            width: 100%;
+        }
+
+        .settings-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .export-button {
+            position: static;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+    }
+</style>
+
+</head>
+<body>
+    
+<div class="main-container">
+    <!-- 页面标题 -->
+    <div class="page-header">
+        <h1>📚 听写练习</h1>
+        <div class="date-info">📅 今天</div>
+        <div class="card-count">📊 共 <span id="total-cards">2</span> 张卡片</div>
+    </div>
+
+    <!-- 设置面板 -->
+    <div class="settings-panel">
+        <div class="settings-title">
+            ⚙️ 听写设置
+        </div>
+        <div class="settings-grid">
+            <div class="setting-group">
+                <label for="repeat-count">重复次数</label>
+                <select id="repeat-count">
+                    <option value="1">1次</option>
+                    <option value="2" selected>2次</option>
+                    <option value="3">3次</option>
+                    <option value="4">4次</option>
+                    <option value="5">5次</option>
+                </select>
+            </div>
+            <div class="setting-group">
+                <label for="content-side">听写内容</label>
+                <select id="content-side">
+                    <option value="front" selected>正面内容</option>
+                    <option value="back">背面内容</option>
+                    <option value="both">正面+背面</option>
+                </select>
+            </div>
+            <div class="setting-group">
+                <label for="card-order">卡片顺序</label>
+                <select id="card-order">
+                    <option value="sequential" selected>按顺序</option>
+                    <option value="random">随机顺序</option>
+                    <option value="marked-first">标记的优先</option>
+                </select>
+            </div>
+            <div class="setting-group">
+                <label for="voice-language">语音语言</label>
+                <select id="voice-language">
+                    <option value="auto" selected>自动检测</option>
+                    <option value="zh-CN">中文 (普通话)</option>
+                    <option value="en-US">英语 (美式)</option>
+                    <option value="en-GB">英语 (英式)</option>
+                    <option value="ja-JP">日语</option>
+                    <option value="ko-KR">韩语</option>
+                    <option value="fr-FR">法语</option>
+                    <option value="de-DE">德语</option>
+                    <option value="es-ES">西班牙语</option>
+                </select>
+            </div>
+            <div class="setting-group">
+                <label>其他选项</label>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="auto-next" checked>
+                    <label for="auto-next">自动下一张</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="show-progress">
+                    <label for="show-progress">显示进度</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 卡片显示和标记区域 -->
+    <div class="card-display-area">
+        <!-- 卡片容器 -->
+        <div class="card-container">
+            <div class="flashcard-grid" id="cardGrid">
+                
+                <div class="card" id="card-1" data-tags="日文,语法,RUBY" data-index="0">
+                    <div class="card-inner">
+                        <div class="card-front">
+                            <div class="deck-name">JP test</div>
+                            <div class="card-index">1/2</div>
+                            <div class="card-content">
+                                <p><ruby>学校<rt>がっこう</rt></ruby> に <ruby>行<rt>い</rt></ruby>きます</p>
+                            </div>
+                        </div>
+                        <div class="card-back">
+                            <div class="card-index">1/2</div>
+                            <div class="card-content">
+                                <p>我去学校。解释：日语句子中的助词に表示方向。</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 听写状态指示 -->
+                    <div class="listen-status" id="listen-status-0">
+                        正在播放...
+                    </div>
+                </div>
+                
+                <div class="card" id="card-2" data-tags="日文,敬语,RUBY" data-index="1">
+                    <div class="card-inner">
+                        <div class="card-front">
+                            <div class="deck-name">JP test</div>
+                            <div class="card-index">2/2</div>
+                            <div class="card-content">
+                                <p><ruby>食<rt>た</rt></ruby>べます は <ruby>敬語<rt>けいご</rt></ruby> です</p>
+                            </div>
+                        </div>
+                        <div class="card-back">
+                            <div class="card-index">2/2</div>
+                            <div class="card-content">
+                                <p>&quot;食べます&quot;是敬语形式。</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 听写状态指示 -->
+                    <div class="listen-status" id="listen-status-1">
+                        正在播放...
+                    </div>
+                </div>
+                
+            </div>
+            
+            <!-- 听写控制按钮 - 移到卡片正下方 -->
+            <div class="listen-controls">
+                <button id="prev-button">⬅️ 上一张</button>
+                <button id="play-button">🔊 播放</button>
+                <button id="next-button">➡️ 下一张</button>
+            </div>
+        </div>
+
+        <!-- 卡片标记面板 -->
+        <div class="marking-panel">
+            <div class="marking-title">📝 卡片标记</div>
+            <div class="marking-buttons">
+                <button class="mark-button familiar" data-mark="familiar">
+                    ✅ 熟悉
+                </button>
+                <button class="mark-button vague" data-mark="vague">
+                    ❓ 模糊
+                </button>
+                <button class="mark-button forgotten" data-mark="forgotten">
+                    ❌ 忘记
+                </button>
+            </div>
+            
+            <div class="progress-info">
+                <h4>📊 学习进度</h4>
+                <div class="progress-stats">
+                    <div class="stat-item">
+                        <span><span class="stat-color" style="background: #28a745;"></span>熟悉</span>
+                        <span id="familiar-count">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span><span class="stat-color" style="background: #ffc107;"></span>模糊</span>
+                        <span id="vague-count">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span><span class="stat-color" style="background: #dc3545;"></span>忘记</span>
+                        <span id="forgotten-count">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span><span class="stat-color" style="background: #6c757d;"></span>未标记</span>
+                        <span id="unmarked-count">2</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 导出按钮 -->
+<button class="export-button" id="export-report">
+    📊 导出报告
+</button>
+
+    
+    
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const cards = Array.from(document.querySelectorAll('.card'))
+        let currentCardIndex = 0
+
+        // 显示指定索引的卡片
+        function showOnlyIndex(index) {
+            const total = cards.length
+            currentCardIndex = ((index % total) + total) % total // 确保索引在有效范围内
+            cards.forEach((card, i) => {
+                if (i === currentCardIndex) {
+                    card.classList.add('active')
+                } else {
+                    card.classList.remove('active')
+                }
+            })
+        }
+
+        // 初始化显示第一张卡片
+        showOnlyIndex(0)
+
+        // 点击翻转
+        cards.forEach(card => {
+            card.addEventListener('click', () => card.classList.toggle('flipped'))
+        })
+
+        // 键盘导航
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') {
+                showOnlyIndex(currentCardIndex + 1)
+            } else if (e.key === 'ArrowLeft') {
+                showOnlyIndex(currentCardIndex - 1)
+            }
+        })
+    })
+    </script>
+    
+<script>
+class ListenMode {
+    constructor() {
+        this.cards = document.querySelectorAll('.card');
+        this.currentIndex = 0;
+        this.cardMarks = new Map(); // 存储卡片标记状态
+        this.isListening = false;
+        this.settings = {
+            repeatCount: 2,
+            contentSide: 'front',
+            cardOrder: 'sequential',
+            autoNext: true,
+            showProgress: false,
+            voiceLanguage: 'auto'
+        };
+        
+        this.init();
+    }
+    
+    init() {
+        this.bindEvents();
+        this.loadSettings();
+        this.showCard(0);
+        this.updateProgress();
+        
+        // 设置当前日期
+        const dateElement = document.querySelector('.date-info');
+        if (dateElement && !dateElement.textContent.includes('今天')) {
+            const today = new Date().toLocaleDateString('zh-CN', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                weekday: 'long'
+            });
+            dateElement.innerHTML = `📅 ${today}`;
+        }
+    }
+    
+    bindEvents() {
+        // 控制按钮事件
+        document.getElementById('prev-button').addEventListener('click', () => this.prevCard());
+        document.getElementById('next-button').addEventListener('click', () => this.nextCard());
+        document.getElementById('play-button').addEventListener('click', () => this.playCard());
+        
+        // 标记按钮事件
+        document.querySelectorAll('.mark-button').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const mark = e.target.dataset.mark;
+                this.markCard(this.currentIndex, mark);
+            });
+        });
+        
+        // 设置变更事件
+        document.getElementById('repeat-count').addEventListener('change', (e) => {
+            this.settings.repeatCount = parseInt(e.target.value);
+        });
+        
+        document.getElementById('content-side').addEventListener('change', (e) => {
+            this.settings.contentSide = e.target.value;
+        });
+        
+        document.getElementById('card-order').addEventListener('change', (e) => {
+            this.settings.cardOrder = e.target.value;
+            this.reorderCards();
+        });
+        
+        document.getElementById('auto-next').addEventListener('change', (e) => {
+            this.settings.autoNext = e.target.checked;
+        });
+        
+        document.getElementById('show-progress').addEventListener('change', (e) => {
+            this.settings.showProgress = e.target.checked;
+            this.toggleProgressDisplay();
+        });
+        
+        document.getElementById('voice-language').addEventListener('change', (e) => {
+            this.settings.voiceLanguage = e.target.value;
+        });
+        
+        // 导出报告事件
+        document.getElementById('export-report').addEventListener('click', () => this.exportReport());
+        
+        // 键盘事件
+        document.addEventListener('keydown', (e) => this.handleKeyboard(e));
+    }
+    
+    loadSettings() {
+        // 从localStorage加载设置
+        const saved = localStorage.getItem('listenModeSettings');
+        if (saved) {
+            this.settings = { ...this.settings, ...JSON.parse(saved) };
+            this.applySettings();
+        }
+    }
+    
+    saveSettings() {
+        localStorage.setItem('listenModeSettings', JSON.stringify(this.settings));
+    }
+    
+    applySettings() {
+        document.getElementById('repeat-count').value = this.settings.repeatCount;
+        document.getElementById('content-side').value = this.settings.contentSide;
+        document.getElementById('card-order').value = this.settings.cardOrder;
+        document.getElementById('auto-next').checked = this.settings.autoNext;
+        document.getElementById('show-progress').checked = this.settings.showProgress;
+        document.getElementById('voice-language').value = this.settings.voiceLanguage;
+    }
+    
+    showCard(index) {
+        // 隐藏所有卡片
+        this.cards.forEach(card => card.classList.remove('active'));
+        
+        // 显示当前卡片
+        if (this.cards[index]) {
+            this.cards[index].classList.add('active');
+            this.currentIndex = index;
+            
+            // 更新按钮状态
+            document.getElementById('prev-button').disabled = index === 0;
+            document.getElementById('next-button').disabled = index === this.cards.length - 1;
+            
+            // 停止当前播放的音频
+            if (this.isListening) {
+                window.speechSynthesis.cancel();
+                this.isListening = false;
+                const playButton = document.getElementById('play-button');
+                playButton.textContent = '🔊 播放';
+                playButton.disabled = false;
+                // 移除所有卡片的listening状态
+                this.cards.forEach(card => card.classList.remove('listening'));
+            }
+        }
+    }
+    
+    prevCard() {
+        if (this.currentIndex > 0) {
+            this.showCard(this.currentIndex - 1);
+        }
+    }
+    
+    nextCard() {
+        if (this.currentIndex < this.cards.length - 1) {
+            this.showCard(this.currentIndex + 1);
+        }
+    }
+    
+    async playCard() {
+        if (this.isListening) return;
+        
+        const currentCard = this.cards[this.currentIndex];
+        const playButton = document.getElementById('play-button');
+        
+        this.isListening = true;
+        currentCard.classList.add('listening');
+        playButton.textContent = '⏸️ 停止';
+        playButton.disabled = true;
+        
+        try {
+            // 获取要播放的内容
+            let content = '';
+            const frontContent = currentCard.querySelector('.card-front .card-content').textContent.trim();
+            const backContent = currentCard.querySelector('.card-back .card-content').textContent.trim();
+            
+            switch (this.settings.contentSide) {
+                case 'front':
+                    content = frontContent;
+                    break;
+                case 'back':
+                    content = backContent;
+                    break;
+                case 'both':
+                    content = `${frontContent}。${backContent}`;
+                    break;
+            }
+            
+            // 使用Web Speech API播放
+            for (let i = 0; i < this.settings.repeatCount; i++) {
+                await this.speak(content);
+                if (i < this.settings.repeatCount - 1) {
+                    await this.delay(500); // 重复间隔
+                }
+            }
+            
+            // 自动下一张
+            if (this.settings.autoNext && this.currentIndex < this.cards.length - 1) {
+                await this.delay(1000);
+                this.nextCard();
+            }
+            
+        } catch (error) {
+            console.error('播放失败:', error);
+            alert('播放失败，请检查浏览器是否支持语音合成功能');
+        } finally {
+            this.isListening = false;
+            currentCard.classList.remove('listening');
+            playButton.textContent = '🔊 播放';
+            playButton.disabled = false;
+        }
+    }
+    
+    speak(text) {
+        return new Promise((resolve, reject) => {
+            if (!window.speechSynthesis) {
+                reject(new Error('浏览器不支持语音合成'));
+                return;
+            }
+
+            // 检测语言并设置相应的语音
+            const utterance = new SpeechSynthesisUtterance(text);
+            
+            // 根据设置选择语言
+            if (this.settings.voiceLanguage === 'auto') {
+                // 智能语言检测
+                if (/[\u4e00-\u9fff]/.test(text)) {
+                    // 包含中文字符
+                    utterance.lang = 'zh-CN';
+                } else if (/[\u3040-\u309f\u30a0-\u30ff\u4e00-\u9faf]/.test(text)) {
+                    // 包含日文字符
+                    utterance.lang = 'ja-JP';
+                } else {
+                    // 默认英文
+                    utterance.lang = 'en-US';
+                }
+            } else {
+                // 使用用户选择的语言
+                utterance.lang = this.settings.voiceLanguage;
+            }
+            
+            // 优化播放参数
+            utterance.rate = 1.0;  // 提高播放速度
+            utterance.pitch = 1.0;
+            utterance.volume = 0.9;
+            
+            utterance.onend = () => {
+                resolve();
+            };
+            
+            utterance.onerror = (event) => {
+                reject(new Error(`语音播放失败: ${event.error}`));
+            };
+            
+            // 清除之前的语音队列，确保流畅播放
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(utterance);
+        });
+    }
+    
+    delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+    
+    markCard(index, mark) {
+        const cardId = this.cards[index].id || `card-${index}`;
+        const previousMark = this.cardMarks.get(cardId);
+        
+        // 更新标记
+        this.cardMarks.set(cardId, {
+            mark: mark,
+            timestamp: new Date().toISOString(),
+            cardIndex: index
+        });
+        
+        // 视觉反馈
+        const currentCard = this.cards[index];
+        currentCard.classList.remove('marked-familiar', 'marked-vague', 'marked-forgotten');
+        currentCard.classList.add(`marked-${mark}`);
+        
+        // 更新进度统计
+        this.updateProgress();
+        
+        // 显示标记反馈
+        this.showMarkFeedback(mark);
+        
+        // 自动下一张（如果启用）
+        if (this.settings.autoNext && index < this.cards.length - 1) {
+            setTimeout(() => this.nextCard(), 800);
+        }
+    }
+    
+    showMarkFeedback(mark) {
+        const messages = {
+            familiar: '✅ 已标记为熟悉',
+            vague: '❓ 已标记为模糊',
+            forgotten: '❌ 已标记为忘记'
+        };
+        
+        // 创建临时提示
+        const feedback = document.createElement('div');
+        feedback.className = 'mark-feedback';
+        feedback.textContent = messages[mark];
+        feedback.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 20px;
+            font-size: 1rem;
+            z-index: 2000;
+            animation: fadeInOut 1.5s ease-in-out;
+        `;
+        
+        document.body.appendChild(feedback);
+        setTimeout(() => feedback.remove(), 1500);
+    }
+    
+    updateProgress() {
+        const stats = { familiar: 0, vague: 0, forgotten: 0, unmarked: 0 };
+        
+        // 统计各种标记
+        for (let i = 0; i < this.cards.length; i++) {
+            const cardId = this.cards[i].id || `card-${i}`;
+            const mark = this.cardMarks.get(cardId);
+            
+            if (mark) {
+                stats[mark.mark]++;
+            } else {
+                stats.unmarked++;
+            }
+        }
+        
+        // 更新显示
+        document.getElementById('familiar-count').textContent = stats.familiar;
+        document.getElementById('vague-count').textContent = stats.vague;
+        document.getElementById('forgotten-count').textContent = stats.forgotten;
+        document.getElementById('unmarked-count').textContent = stats.unmarked;
+    }
+    
+    reorderCards() {
+        // 根据设置重新排序卡片
+        const cardArray = Array.from(this.cards);
+        let orderedCards = [];
+        
+        switch (this.settings.cardOrder) {
+            case 'sequential':
+                orderedCards = cardArray;
+                break;
+            case 'random':
+                orderedCards = this.shuffleArray([...cardArray]);
+                break;
+            case 'marked-first':
+                // 优先显示已标记的卡片
+                const marked = cardArray.filter(card => {
+                    const cardId = card.id || `card-${Array.from(this.cards).indexOf(card)}`;
+                    return this.cardMarks.has(cardId);
+                });
+                const unmarked = cardArray.filter(card => {
+                    const cardId = card.id || `card-${Array.from(this.cards).indexOf(card)}`;
+                    return !this.cardMarks.has(cardId);
+                });
+                orderedCards = [...marked, ...unmarked];
+                break;
+        }
+        
+        // 重新排列DOM元素
+        const container = document.getElementById('cardGrid');
+        orderedCards.forEach(card => container.appendChild(card));
+        
+        // 更新cards数组
+        this.cards = document.querySelectorAll('.card');
+        this.showCard(0);
+    }
+    
+    shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+    
+    toggleProgressDisplay() {
+        const progressInfo = document.querySelector('.progress-info');
+        if (this.settings.showProgress) {
+            progressInfo.style.display = 'block';
+        } else {
+            progressInfo.style.display = 'none';
+        }
+    }
+    
+    exportReport() {
+        const reportData = [];
+        const timestamp = new Date().toISOString();
+        
+        // 收集所有卡片数据
+        for (let i = 0; i < this.cards.length; i++) {
+            const card = this.cards[i];
+            const cardId = card.id || `card-${i}`;
+            const mark = this.cardMarks.get(cardId);
+            
+            const frontContent = card.querySelector('.card-front .card-content').textContent.trim();
+            const backContent = card.querySelector('.card-back .card-content').textContent.trim();
+            const tags = card.dataset.tags || '';
+            
+            reportData.push({
+                '卡片编号': i + 1,
+                '正面内容': frontContent,
+                '背面内容': backContent,
+                '标签': tags,
+                '标记状态': mark ? mark.mark : '未标记',
+                '标记时间': mark ? mark.timestamp : '',
+                '导出时间': timestamp
+            });
+        }
+        
+        // 生成CSV
+        const csv = this.generateCSV(reportData);
+        
+        // 下载文件
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `听写报告_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // 显示成功提示
+        alert('📊 听写报告已导出成功！');
+    }
+    
+    generateCSV(data) {
+        if (data.length === 0) return '';
+        
+        const headers = Object.keys(data[0]);
+        const csvContent = [
+            headers.join(','),
+            ...data.map(row => 
+                headers.map(header => {
+                    const value = String(row[header] || '');
+                    // 处理包含逗号或引号的值
+                    if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+                        return `"${value.replace(/"/g, '""')}"`;
+                    }
+                    return value;
+                }).join(',')
+            )
+        ].join('\n');
+        
+        // 添加BOM以支持中文
+        return '\ufeff' + csvContent;
+    }
+    
+    handleKeyboard(e) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+        
+        switch (e.key) {
+            case 'ArrowLeft':
+                e.preventDefault();
+                this.prevCard();
+                break;
+            case 'ArrowRight':
+                e.preventDefault();
+                this.nextCard();
+                break;
+            case ' ':
+                e.preventDefault();
+                this.playCard();
+                break;
+            case '1':
+                e.preventDefault();
+                this.markCard(this.currentIndex, 'familiar');
+                break;
+            case '2':
+                e.preventDefault();
+                this.markCard(this.currentIndex, 'vague');
+                break;
+            case '3':
+                e.preventDefault();
+                this.markCard(this.currentIndex, 'forgotten');
+                break;
+        }
+    }
+}
+
+// 添加标记样式
+const markStyles = document.createElement('style');
+markStyles.textContent = `
+    .card.marked-familiar {
+        border: 3px solid #28a745;
+        box-shadow: 0 0 15px rgba(40, 167, 69, 0.3);
+    }
+    
+    .card.marked-vague {
+        border: 3px solid #ffc107;
+        box-shadow: 0 0 15px rgba(255, 193, 7, 0.3);
+    }
+    
+    .card.marked-forgotten {
+        border: 3px solid #dc3545;
+        box-shadow: 0 0 15px rgba(220, 53, 69, 0.3);
+    }
+    
+    @keyframes fadeInOut {
+        0%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+        50% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    }
+`;
+document.head.appendChild(markStyles);
+
+// 初始化听写模式
+document.addEventListener('DOMContentLoaded', () => {
+    window.listenMode = new ListenMode();
+});
+</script>
+
+</body>
+</html>
