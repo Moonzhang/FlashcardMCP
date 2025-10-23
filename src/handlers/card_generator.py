@@ -7,49 +7,31 @@ from jinja2 import Template, Environment, FileSystemLoader
 # 模板目录路径 - 使用 config.py 中的配置
 _template_dir = TEMPLATES_DIR
 
+
 def generate_flashcards(json_data):
     """
-    根据 JSON 数据生成闪卡 HTML 页面。
+    生成闪卡 HTML 内容。
 
-    Generates flashcard HTML pages based on JSON data.
-
-    Args:
-        json_data (dict): 包含闪卡数据、元数据和样式配置的 JSON 字典。
-                          JSON dictionary containing flashcard data, metadata, and style configurations.
-
-    Returns:
-        str: 渲染后的闪卡 HTML 内容。
-             Rendered flashcard HTML content.
-
-    Raises:
-        ValueError: 如果 JSON 结构无效或闪卡转换失败。
-                    If the JSON structure is invalid or flashcard conversion fails.
+    Generate flashcard HTML content.
     """
-    # 验证 JSON 结构：使用返回的字典结果并在无效时抛出异常
-    validation_result = validate_json_structure(json_data)
-    if isinstance(validation_result, dict):
-        if not validation_result.get('is_valid', False):
-            raise ValueError(validation_result.get('error') or 'Invalid JSON structure')
-    else:
-        # 如果实现变动为抛异常，捕获并转换为统一异常
-        try:
-            validate_json_structure(json_data)
-        except ValueError as e:
-            raise ValueError(f"Invalid JSON structure: {str(e)}")
-    
-    # 规范化 JSON 数据
+    # 验证并规范化 JSON 数据
+    is_valid, errors = validate_json_structure(json_data)
+    if not is_valid:
+        raise ValueError(f"Invalid JSON structure: {errors}")
+
     normalized_data = normalize_json_data(json_data)
-    
-    # 提取元数据
+
+    # 解析元数据
     metadata = normalized_data.get('metadata', {})
-    title = metadata.get('title', 'FlashCard')
+    title = metadata.get('title', 'Untitled Flashcard Set')
     description = metadata.get('description', '')
-    
+
     # 提取样式配置
     style_config = normalized_data.get('style', {})
-    template = style_config.get('template', 'minimal')
-    
-    # 创建 Markdown 解析器实例
+    # 使用 config 中的默认模板名称作为回退
+    template = style_config.get('template', FLASHCARD_CONFIG.get('default_template_name', 'minimal'))
+
+    # 准备模板上下文
     md_parser = MarkdownParser()
     
     # 提取闪卡数据并转换 Markdown
@@ -104,48 +86,41 @@ def render_flashcard_template(title, description, cards, template='minimal', sty
         str: 渲染后的 HTML 字符串。
              Rendered HTML string.
     """
-    # 添加调试信息
-    print(f"🔍 [DEBUG] render_flashcard_template called with template='{template}'")
+
     
     # 获取模板配置
     available_templates = FLASHCARD_CONFIG.get('available_templates', {})
-    print(f"🔍 [DEBUG] available_templates: {available_templates}")
     
     # 尝试从配置中获取模板文件路径
     template_file = None
     if template in available_templates:
         template_config = available_templates[template]
-        print(f"🔍 [DEBUG] Template config for '{template}': {template_config}")
         # 适配新的配置结构：模板配置现在是字典，包含file_path字段
         if isinstance(template_config, dict):
             template_file = template_config.get('file_path')
         else:
             # 兼容旧的配置结构：直接是文件名字符串
             template_file = template_config
-        print(f"🔍 [DEBUG] Extracted template_file: {template_file}")
-        print(f"🔍 [DEBUG] template_file type: {type(template_file)}")
     else:
-        print(f"🔍 [DEBUG] Template '{template}' not found in available_templates")
+        pass
     
     # 尝试加载模板文件
     template_content = None
     if template_file:
         template_path = os.path.join(_template_dir, template_file)
-        print(f"🔍 [DEBUG] Trying to load template from: {template_path}")
         if os.path.exists(template_path):
             try:
                 with open(template_path, 'r', encoding='utf-8') as f:
                     template_content = f.read()
-                print(f"🔍 [DEBUG] Successfully loaded template from {template_path}")
             except Exception as e:
-                print(f"🔍 [DEBUG] Failed to load template from {template_path}: {e}")
+                pass
         else:
-            print(f"🔍 [DEBUG] Template file does not exist: {template_path}")
+            pass
     
-    # 如果仍然没有找到模板，使用 'default' 模板
+    # 如果仍然没有找到模板，使用 config 中的默认模板名称回退到 'available_templates' 对应模板
     if not template_content:
-        print(f"🔍 [DEBUG] No template file found, defaulting to 'default' template")
-        template = 'default' # 强制使用 default 模板
+        fallback_template_name = FLASHCARD_CONFIG.get('default_template_name', 'default')
+        template = fallback_template_name
         template_config = available_templates.get(template, {})
         if isinstance(template_config, dict):
             template_file = template_config.get('file_path')
@@ -154,31 +129,42 @@ def render_flashcard_template(title, description, cards, template='minimal', sty
         
         if template_file:
             template_path = os.path.join(_template_dir, template_file)
-            print(f"🔍 [DEBUG] Trying to load default template from: {template_path}")
             if os.path.exists(template_path):
                 try:
                     with open(template_path, 'r', encoding='utf-8') as f:
                         template_content = f.read()
-                    print(f"🔍 [DEBUG] Successfully loaded default template from {template_path}")
                 except Exception as e:
-                    print(f"🔍 [DEBUG] Failed to load default template from {template_path}: {e}")
+                    pass
             else:
-                print(f"🔍 [DEBUG] Default template file does not exist: {template_path}")
+                pass
         else:
-            print(f"🔍 [DEBUG] Default template file path not found in config.")
+            pass
     
     # 如果还是没有找到模板内容，抛出异常
     if not template_content:
         raise ValueError(f"No template found for '{template}' and default template is also unavailable")
 
+    
     # 初始化 style_params
     if style_params is None:
         style_params = {}
 
     # 从 style_params 中获取主题和颜色配置
-    theme = style_params.get('theme', 'light')
+    # 优先使用 style_params，其次使用 config 的默认样式
+    default_style = FLASHCARD_CONFIG.get('default_style', {})
+    theme = style_params.get('theme', default_style.get('theme', 'light'))
     colors = style_params.get('colors', {})
-    font = style_params.get('font', 'Arial, sans-serif')
+    # 新增：显示控制 & 紧凑排版 & 字数限制（统一回退到 config 默认）
+    show_deck_name = bool(style_params.get('show_title', default_style.get('show_title', False)))
+    show_card_index = bool(style_params.get('show_card_index', default_style.get('show_card_index', False)))
+    show_tags = bool(style_params.get('show_tags', default_style.get('show_tags', True)))
+    deck_name_style = style_params.get('deck_name_style', '')
+    card_index_style = style_params.get('card_index_style', '')
+    compact_typography = bool(style_params.get('compact_typography', default_style.get('compact_typography', True)))
+    front_char_limit = style_params.get('front_char_limit') if style_params.get('front_char_limit') is not None else default_style.get('front_char_limit')
+    back_char_limit = style_params.get('back_char_limit') if style_params.get('back_char_limit') is not None else default_style.get('back_char_limit')
+    # 主题类（用于控制背面风格 basic/advance/detail，不更改尺寸）
+    theme_class = f"theme-{theme}" if theme in ['basic','advance','detail'] else ("theme-dark" if theme == 'dark' else 'theme-light')
 
     # 设置默认颜色
     default_colors = {
@@ -192,111 +178,69 @@ def render_flashcard_template(title, description, cards, template='minimal', sty
         'card_border': '#dddddd' if theme != 'dark' else '#444444'
     }
 
+    # 根据主题获取默认颜色
+    theme_style_key = f'{theme}_theme_style'
+    theme_config = FLASHCARD_CONFIG.get(theme_style_key, FLASHCARD_CONFIG['default_style'])
+    default_colors = theme_config.get('colors', FLASHCARD_CONFIG['default_style']['colors'])
+
     # 合并用户自定义颜色和默认颜色
     for key, value in default_colors.items():
         if key in colors:
             # 确保颜色值以#开头
             color_value = colors[key]
-            if not color_value.startswith('#'):
+            if isinstance(color_value, str) and not color_value.startswith('#'):
                 color_value = '#' + color_value
             default_colors[key] = color_value
     
     # 从 style_params 中获取新的CSS样式值，如果不存在则使用默认值
-    card_width = style_params.get('card_width', '300px')
-    card_height = style_params.get('card_height', '200px')
-    card_front_background = style_params.get('card_front_background', '#ffffff')
-    card_back_background = style_params.get('card_back_background', '#f5f5f5')
+    card_width = style_params.get('card_width', default_style.get('card_width'))
+    card_height = style_params.get('card_height', default_style.get('card_height')) 
     card_front_text_align = style_params.get('card_front_text_align', 'center')
-    card_back_text_align = style_params.get('card_back_text_align', 'center')
-    card_border = style_params.get('card_border', '1px solid #dddddd')
+    card_back_text_align = style_params.get('card_back_text_align', 'left')
+    card_border = style_params.get('card_border') or default_colors.get('card_border')
     card_border_radius = style_params.get('card_border_radius', '8px')
     card_padding = style_params.get('card_padding', '20px')
     card_box_shadow = style_params.get('card_box_shadow', '0 2px 4px rgba(0,0,0,0.1)')
-    
-    # 字体相关 - 支持CSS font简写，从font变量中提取字体族
-    font_css = style_params.get('font', 'Arial, sans-serif')
-    # 从font_css中提取字体族部分，用于font_family
-    if 'px' in font_css or '/' in font_css:
-        # 如果包含字体大小信息，提取字体族部分
-        font_parts = font_css.split()
-        if len(font_parts) >= 2:
-            font = ' '.join(font_parts[1:])  # 去掉字体大小，保留字体族
-        else:
-            font = font_css
-    else:
-        font = font_css
-    card_front_font = style_params.get('card_front_font', '24px/1.2 Arial, sans-serif')
-    card_back_font = style_params.get('card_back_font', '18px/1.2 Arial, sans-serif')
-    
-    # 生成描述部分
-    description_section = f'<p>{description}</p>' if description else ''
-    
-    # 生成过滤器部分
-    all_tags = set()
-    for card in cards:
-        all_tags.update(card['tags'])
-    
-    filter_section = ''
-    if all_tags:
-        filter_buttons = ['<button class="filter-btn active" data-tag="all">全部</button>']
-        for tag in sorted(all_tags):
-            filter_buttons.append(f'<button class="filter-btn" data-tag="{tag}">{tag}</button>')
-        
-        filter_section = f'''
-        <!-- 过滤器 -->
-        <div class="filter-container" id="filterContainer">
-            {''.join(filter_buttons)}
-        </div>
-        '''
 
-    # 生成闪卡内容
-    cards_html = ''
-    for i, card in enumerate(cards):
-        card_id = f"card-{i}"
-        tags_str = ','.join(card['tags']) if card['tags'] else ''
-        
-        # 生成标签HTML
-        tags_html = ''
-        if card['tags']:
-            tag_elements = [f'<span class="card-tag">{tag}</span>' for tag in card['tags']]
-            tags_html = f'<div class="card-tags">{"".join(tag_elements)}</div>'
-        
-        cards_html += f'''
-        <div class="card" id="{card_id}" data-tags="{tags_str}">
-            <div class="card-inner">
-                <div class="card-front">
-                    <div class="deck-name">{deck_name}</div>
-                    <div class="card-content">{card['front']}</div>
-                    {tags_html}
-                </div>
-                <div class="card-back">
-                    <div class="card-content">{card['back']}</div>
-                </div>
-            </div>
-        </div>
-        '''
-    
-    # 选择渲染方式：优先使用Jinja2
+    # 字体相关 - 支持CSS font简写，从font变量中提取字体族
+    font_css = style_params.get('font', default_style.get('font', 'Arial, sans-serif'))
+    # 前后字体
+    card_front_font = style_params.get('card_front_font')
+    card_back_font = style_params.get('card_back_font')
+
+    # 生成卡片HTML片段（简化预览环境）
+    description_section = f"<p class=\"description\">{description}</p>" if description else ""
+    filter_section = ""
+    cards_html = "".join([
+        f"<div class=\"card\"><div class=\"card-front\">{c['front']}</div><div class=\"card-back\">{c['back']}</div></div>" for c in cards
+    ])
+
     context = {
         'title': title,
-        'description': description,
-        'cards': cards,  # 直接传递卡片列表
-        'font_family': font,
         'theme': theme,
+        'theme_class': theme_class,
+        'compact_typography': compact_typography,
+        'show_deck_name': show_deck_name,
+        'show_card_index': show_card_index,
+        'show_tags': show_tags,
+        'deck_name_style': deck_name_style,
+        'card_index_style': card_index_style,
+        'front_char_limit': front_char_limit,
+        'back_char_limit': back_char_limit,
         'total_cards': str(len(cards)),
         'primary_color': default_colors['primary'],
         'secondary_color': default_colors['secondary'],
         'background_color': default_colors['background'],
         'text_color': default_colors['text'],
         'card_bg': default_colors['card_bg'],
-        'card_front_bg': card_front_background,
-        'card_back_bg': card_back_background,
+        'card_front_bg': default_colors['card_front_bg'],
+        'card_back_bg': default_colors['card_back_bg'],
         'card_border': card_border,
+        'card_border_radius': card_border_radius,
         'card_width': card_width,
         'card_height': card_height,
         'card_front_text_align': card_front_text_align,
         'card_back_text_align': card_back_text_align,
-        'card_border_radius': card_border_radius,
         'card_padding': card_padding,
         'card_box_shadow': card_box_shadow,
         'font_css': font_css,
@@ -304,18 +248,14 @@ def render_flashcard_template(title, description, cards, template='minimal', sty
         'card_back_font': card_back_font,
         'description_section': description_section,
         'filter_section': filter_section,
+        'cards': cards,
         'cards_html': cards_html,
         'deck_name': deck_name
     }
-    
-    # 添加模板内容调试信息
-    print(f"🔍 [DEBUG] Template content length: {len(template_content)}")
-    print(f"🔍 [DEBUG] Template content preview (first 200 chars): {template_content[:200]}")
-    
+
     # 检查是否使用模板继承
     if template_content and '{% extends' in template_content:
         # 使用 Environment 和 FileSystemLoader 来支持模板继承
-        print(f"🔍 [DEBUG] Template uses inheritance, using Environment with FileSystemLoader")
         env = Environment(loader=FileSystemLoader(_template_dir))
         # 使用配置中的实际文件名而不是 template.html
         template_config = FLASHCARD_CONFIG['available_templates'].get(template, {})
@@ -324,11 +264,7 @@ def render_flashcard_template(title, description, cards, template='minimal', sty
         rendered_html = tmpl.render(**context)
     else:
         # 使用传统的 Template 方式
-        print(f"🔍 [DEBUG] Template does not use inheritance, using Template directly")
         tmpl = Template(template_content)
         rendered_html = tmpl.render(**context)
-    
-    print(f"🔍 [DEBUG] Rendered HTML length: {len(rendered_html)}")
-    print(f"🔍 [DEBUG] Rendered HTML preview (first 200 chars): {rendered_html[:200]}")
     
     return rendered_html

@@ -3,6 +3,7 @@ import re
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 from pydantic import BaseModel, Field, field_validator
+from config import FLASHCARD_CONFIG
 
 
 class Card(BaseModel):
@@ -42,14 +43,14 @@ class Style(BaseModel):
     theme: str = "light"
     colors: Dict[str, Any] = Field(default_factory=dict)
     
-    # 字体相关 - 支持CSS font简写
-    font: str = "Arial, sans-serif"
-    card_front_font: str = "24px/1.2 Arial, sans-serif"
+    # 字体相关 - 支持CSS font简写，使用config中的默认值
+    font: str = "Arial,  PingFang SC, Microsoft YaHei,  sans-serif"
+    card_front_font: str = "24px/1.2 Arial, sans-serif, "
     card_back_font: str = "18px/1.2 Arial, sans-serif"
     
-    # 卡片尺寸
-    card_width: str = "300px"
-    card_height: str = "200px"
+    # 卡片尺寸 - 与config.py保持一致
+    card_width: str = "74.25mm"
+    card_height: str = "105mm"
     
     # 背景 - 支持颜色、渐变、图片
     card_front_background: str = "#ffffff"
@@ -64,6 +65,19 @@ class Style(BaseModel):
     card_border_radius: str = "8px"
     card_padding: str = "20px"
     card_box_shadow: str = "0 2px 4px rgba(0,0,0,0.1)"
+
+    # 显示控制 - 与config.py保持一致
+    show_title: bool = False
+    show_card_index: bool = False
+    show_page_number: bool = False
+    deck_name_style: str = ""
+    card_index_style: str = ""
+    page_number_style: str = ""
+
+    # 紧凑排版与字符数限制 - 与config.py保持一致
+    compact_typography: bool = True
+    front_char_limit: Optional[int] = 180
+    back_char_limit: Optional[int] = 380
     
     @field_validator('theme')
     def validate_theme(cls, v):
@@ -79,7 +93,10 @@ class Style(BaseModel):
         Raises:
             ValueError: If the theme value is invalid.
         """
-        valid_themes = ['light', 'dark', 'custom']
+        # 支持的主题类型：
+        # - light/dark: 基础颜色主题
+        # - basic/advance/detail: 卡片背面样式主题
+        valid_themes = FLASHCARD_CONFIG.get('available_themes', ['light', 'dark'])
         if v not in valid_themes:
             raise ValueError(f"无效的主题: {v}，有效主题为: {valid_themes}")
         return v
@@ -100,10 +117,13 @@ class Style(BaseModel):
     
     @field_validator('card_width', 'card_height')
     def validate_dimensions(cls, v):
-        """Validate dimension values (px, %, em, rem, etc.)"""
-        if not re.match(r'^\d+(\.\d+)?(px|%|em|rem|vw|vh)$', v.strip()):
-            raise ValueError('尺寸值格式无效，应为数字+单位（如300px, 50%, 2em）')
-        return v.strip()
+        """Validate dimension values (px, %, em, rem, vw, vh, mm, cm, in, pt)"""
+        if not isinstance(v, str):
+            raise ValueError('尺寸值必须是字符串')
+        v = v.strip()
+        if not re.match(r'^\d+(\.\d+)?(px|%|em|rem|vw|vh|mm|cm|in|pt)$', v):
+            raise ValueError('尺寸值格式无效，应为数字+单位（如300px, 50%, 2em, 74.25mm）')
+        return v
     
     @field_validator('card_border')
     def validate_border(cls, v):

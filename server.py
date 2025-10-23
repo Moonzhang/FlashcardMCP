@@ -314,7 +314,7 @@ async def generate_flashcards_pdf(
     title: str = "My Flashcard Set",
     description: str = "PDF format flashcards",
     layout: str = "a4_8",
-    output_path: str = "sample"
+    output_path: str = ""
 ) -> str:
     """
     Generate PDF flashcards from JSON card data.
@@ -349,6 +349,12 @@ async def generate_flashcards_pdf(
         # Generate PDF content
         pdf_bytes = await generate_flashcards_pdf_async(flashcard_data, layout)
         
+        # Determine output directory (default to config.OUTPUT_DIR)
+        try:
+            from config import OUTPUT_DIR as DEFAULT_OUTPUT_DIR
+        except Exception:
+            DEFAULT_OUTPUT_DIR = "test_output"
+        output_path = output_path or DEFAULT_OUTPUT_DIR
         # Ensure output directory exists
         os.makedirs(output_path, exist_ok=True)
         
@@ -506,4 +512,4 @@ def validate_flashcard_data(flashcard_json: Dict[str, Any]) -> str:
 
 if __name__ == "__main__":
     # Run the MCP server
-    mcp.run(transport="http")
+    mcp.run()

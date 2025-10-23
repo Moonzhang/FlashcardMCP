@@ -7,14 +7,19 @@ import uvicorn
 import traceback
 import urllib.parse
 import uuid
-from typing import Optional, List
+import logging
+import sys
+import re
+from typing import Optional, List, cast
+from starlette.types import ASGIApp
 from src.handlers.card_generator import generate_flashcards
 from src.handlers.pdf_generator import generate_flashcards_pdf_async
 from src.utils.csv_reader import convert_csv_to_json_data
 from src.utils.json_validator import FlashcardData  # 导入 FlashcardData 模型
 from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 from fastmcp import FastMCP # 导入 FastMCP
-from config import TEMPLATES_DIR  # 导入模板目录配置
+from config import TEMPLATES_DIR, FLASHCARD_CONFIG, STATIC_DIR  # 导入模板目录配置、闪卡配置与静态目录
 
 # 使用 config.py 中的模板目录配置
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
@@ -22,18 +27,54 @@ templates = Jinja2Templates(directory=TEMPLATES_DIR)
 # 创建 FastAPI 应用实例
 app = FastAPI(title="FastAPI Card Generator", description="基于 FastAPI 的闪卡生成服务")
 
+# 配置日志记录器，使用标准输出流确保在 uvicorn 下可见
+logger = logging.getLogger("flashcard")
+logger.setLevel(logging.INFO)
+_stream = logging.StreamHandler(sys.stdout)
+_stream.setLevel(logging.INFO)
+_formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+_stream.setFormatter(_formatter)
+if not logger.handlers:
+    logger.addHandler(_stream)
+logger.propagate = False
+
 # 创建 API 路由器，用于组织对外工具端点
+
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("FlashCardMCP app started")
+    yield
+    logger.info("FlashCardMCP app shutdown")
+
+
+app = FastAPI(lifespan=lifespan)
+
 api_router = APIRouter(prefix="/api", tags=["api"])
 """
 API router, used to organize external tool endpoints.
 """
 
 # 将 API 路由器包含到主应用中
-app.include_router(api_router)
+# app.include_router(api_router)  # moved to end
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    logger.info(f"[http] {request.method} {request.url.path}{'?' + request.url.query if request.url.query else ''}")
+    response = await call_next(request)
+    return response
 
 # 创建 FastMCP 应用实例并挂载到 FastAPI 应用
 mcp_app = FastMCP.from_fastapi(app=app)
-app.mount("/mcp", mcp_app)
+app.mount("/mcp", cast(ASGIApp, mcp_app))
+
+# 挂载静态文件目录，提供 /static 资源访问
+try:
+    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+    logger.info(f"[startup] Mounted static directory: {STATIC_DIR}")
+except Exception as e:
+    logger.warning(f"[startup] Failed to mount static directory {STATIC_DIR}: {e}")
 
 @app.get("/")
 async def index(request: Request):
@@ -44,11 +85,10 @@ async def index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 @app.get("/preview")
-async def preview(dataset: str = "all", template: str = "minimal"):
+async def preview(request: Request, dataset: str = "all", template: str = "minimal", theme_param: Optional[str] = None, show_title: bool = True, show_card_index: bool = True):
     """
     Preview flashcard page.
-    Merges all datasets from `tests/test_data.json` into a single card set and displays them using a specified template.
-    The collection title is shown in the top-left corner of the card, with white front and light gray back.
+    Loads `tests/test_data.json`, merges datasets if needed, and renders HTML via `generate_flashcards` using the selected template.
 
     Args:
         dataset (str): Dataset name, currently only "all" is supported, meaning all datasets are merged.
@@ -58,9 +98,11 @@ async def preview(dataset: str = "all", template: str = "minimal"):
         HTMLResponse: Response containing the generated flashcard HTML content.
     """
     try:
+        logger.info(f"[preview] dataset={dataset}, template={template}, theme_param={theme_param}, show_title={show_title}, show_card_index={show_card_index}")
         # 修复 __file__ 未定义的问题，使用当前工作目录
         project_root = os.path.abspath(os.path.join(os.getcwd()))
         sample_path = os.path.join(project_root, 'tests', 'test_data.json')
+        logger.info(f"[preview] sample_path={sample_path}, exists={os.path.exists(sample_path)}")
 
         def _default_sample():
             """
@@ -72,7 +114,7 @@ async def preview(dataset: str = "all", template: str = "minimal"):
             """
             return {
                 "metadata": {"title": "Preview_dataset", "description": "preview dataset page show"},
-                "style": {"template": template, "theme": "light"},
+                "style": {"template": template, "theme": theme_param or "light"},
                 "cards": [
                     {"front": "Question/问题", "back": "Answer/答案", "tags": ["Preview"]}
                 ]
@@ -121,45 +163,65 @@ async def preview(dataset: str = "all", template: str = "minimal"):
                                         if key not in tags:
                                             c['tags'] = tags + [key]
                                         merged_cards.append(c)
-                # 组装指定模板所需 json
+                # 合并样式：优先使用 test_data.json 中的 style，再覆盖模板与主题
+                merged_style = {}
+                if isinstance(loaded, dict):
+                    if isinstance(loaded.get('style'), dict):
+                        merged_style = dict(loaded['style'])
+                    else:
+                        for _, v in loaded.items():
+                            if isinstance(v, dict) and isinstance(v.get('style'), dict):
+                                merged_style = dict(v['style'])
+                                break
+                merged_style['template'] = template_name
+                merged_style['theme'] = theme_param or merged_style.get('theme', 'light')
+                # 新增：允许通过查询参数控制标题和序号显示，默认开启
+                merged_style['show_title'] = merged_style.get('show_title', show_title)
+                merged_style['show_card_index'] = merged_style.get('show_card_index', show_card_index)
                 return {
                     "metadata": {
                         "title": title_for_deck,
                         "description": description_for_deck
                     },
-                    "style": {
-                        "template": template_name,
-                        "theme": "light",
-                        "colors": {
-                            "card_front_bg": "#ffffff",
-                            "card_back_bg": "#f5f5f5"
-                        },
-                        "font": "Arial, sans-serif",
-                        "card_width": "300px",
-                        "card_height": "200px",
-                        "card_front_image": "none",
-                        "card_back_image": "none",
-                        "card_front_text_align": "center",
-                        "card_back_text_align": "center",
-                        "font_size": "16px",
-                        "front_font_size": "24px",
-                        "back_font_size": "18px"
-                    },
+                    "style": merged_style,
                     "cards": merged_cards if merged_cards else _default_sample()["cards"]
                 }
             else:
                 return _default_sample()
 
+        def _rewrite_file_uri_to_static(cards):
+            """将 file:// 路径规范化为 /static 以便浏览器加载。"""
+            normalized = []
+            for c in cards:
+                if not isinstance(c, dict):
+                    normalized.append(c)
+                    continue
+                new_c = dict(c)
+                for side in ("front", "back"):
+                    val = new_c.get(side)
+                    if isinstance(val, str):
+                        new_c[side] = re.sub(r"src=\"file://[^\"]*/static/", "src=\"/static/", val)
+                        # 同时处理 Markdown 图片语法中的路径
+                        new_c[side] = re.sub(r"\(file://[^\)]*/static/", "(/static/", new_c[side])
+                normalized.append(new_c)
+            return normalized
+
         sample_json = _build_preview_json(template)
+        # 规范化图片路径，避免 file:// 在 http 环境下被浏览器阻止
+        sample_json["cards"] = _rewrite_file_uri_to_static(sample_json.get("cards", []))
 
-        html_content = generate_flashcards(json_data=sample_json)
+        logger.info(f"sample_json={json.dumps(sample_json, ensure_ascii=False, indent=2)}")
+        logger.info(f"[preview] style={sample_json.get('style')}, cards={len(sample_json.get('cards', []))}")
 
+        # 使用生成器根据 JSON 渲染为完整 HTML
+        html_content = generate_flashcards(sample_json)
         return HTMLResponse(content=html_content)
     except Exception as e:
+        logger.exception("Preview generation failed")
         return HTMLResponse(status_code=500, content=f"<p>Preview generation failed: {e}</p>")
 
 @app.get("/preview_pdf")
-async def preview_pdf(layout: str = 'a4_8'):
+async def preview_pdf(layout: str = 'a4_8', show_title: bool = True, show_card_index: bool = True, show_page_number: bool = True):
     """
     Exports the merged data from the preview page directly to a PDF and returns it as a download stream.
 
@@ -223,14 +285,28 @@ async def preview_pdf(layout: str = 'a4_8'):
                                         if key not in tags:
                                             c['tags'] = tags + [key]
                                         merged_cards.append(c)
+                # 合并样式：优先使用 test_data.json 中的 style
+                merged_style = {}
+                if isinstance(loaded, dict):
+                    if isinstance(loaded.get('style'), dict):
+                        merged_style = dict(loaded['style'])
+                    else:
+                        for _, v in loaded.items():
+                            if isinstance(v, dict) and isinstance(v.get('style'), dict):
+                                merged_style = dict(v['style'])
+                                break
+                # 保持 PDF 模板自身的布局需求，不强制覆盖 template
+                if 'template' not in merged_style:
+                    merged_style['template'] = 'minimal'
+                if 'theme' not in merged_style:
+                    merged_style['theme'] = 'light'
+                # 新增：允许通过查询参数控制标题、序号与页码显示，默认开启
+                merged_style['show_title'] = merged_style.get('show_title', show_title)
+                merged_style['show_card_index'] = merged_style.get('show_card_index', show_card_index)
+                merged_style['show_page_number'] = merged_style.get('show_page_number', show_page_number)
                 return {
                     "metadata": {"title": title_for_deck, "description": description_for_deck},
-                    "style": {
-                        "template": "minimal",
-                        "theme": "light",
-                        "colors": {"card_front_bg": "#ffffff", "card_back_bg": "#f5f5f5"},
-                        "font": "Arial, sans-serif"
-                    },
+                    "style": merged_style,
                     "cards": merged_cards if merged_cards else _default_sample()["cards"]
                 }
             else:
@@ -247,9 +323,7 @@ async def preview_pdf(layout: str = 'a4_8'):
             headers={'Content-Disposition': f"attachment; filename*=UTF-8''{encoded_filename}"}
         )
     except Exception as e:
-        # 打印完整的异常堆栈信息
-        traceback.print_exc()
-        # 提供友好提示
+        logger.exception("Preview PDF generation failed")
         return HTMLResponse(status_code=500, content=f"<p>Preview PDF generation failed: {e}</p>")
 
 
@@ -263,8 +337,8 @@ async def convert_to_flashcards(flashcard_data: FlashcardData):
         flashcard_data (FlashcardData): Pydantic model containing flashcard data.
     """
     try:
-        # 将 Pydantic 模型转换为字典
-        json_data = flashcard_data.model_dump()
+        # 将 Pydantic 模型转换为字典，并包含所有字段
+        json_data = flashcard_data.model_dump(exclude_unset=False)
         
         html_content = generate_flashcards(json_data)
         return JSONResponse(content={
@@ -419,12 +493,20 @@ async def upload_csv(
             if os.path.exists(temp_file_path):
                 os.remove(temp_file_path)
         
+        return JSONResponse(status_code=500, content={
+            'success': False,
+            'error': 'UNKNOWN_ERROR',
+            'message': '未知错误，请稍后重试'
+        })
     except Exception as e:
         return JSONResponse(status_code=500, content={
             'success': False,
-            'error': 'CSV_CONVERSION_ERROR',
-            'message': f'CSV转换失败: {str(e)}'
+            'error': 'INTERNAL_SERVER_ERROR',
+            'message': f'服务器内部错误: {str(e)}'
         })
+
+
+app.include_router(api_router)
 
 
 if __name__ == "__main__":

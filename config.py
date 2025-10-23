@@ -17,6 +17,9 @@ TEMPLATES_DIR = get_path('src', 'templates')
 # 静态文件目录
 STATIC_DIR = get_path('static')
 
+# 默认输出目录
+OUTPUT_DIR = get_path('test_output')
+
 # MCP服务器配置
 SERVER_CONFIG = {
     'host': '127.0.0.1',
@@ -28,13 +31,15 @@ SERVER_CONFIG = {
 
 # 闪卡生成配置
 FLASHCARD_CONFIG = {
-    # 默认模板名称
-    'default_template': 'card_template.html',
+    # 默认模板文件（兼容旧逻辑）
+    'default_template': 'default.html',
+    # 新增：默认模板名称（用于生成器回退使用）
+    'default_template_name': 'default',
     
     # 可用的模板列表
     'available_templates': {
         'default': {
-            'file_path': 'card_template.html',
+            'file_path': 'default.html',
             'description': '默认模板，提供基本的闪卡功能和样式'
         },
         'minimal': {
@@ -45,10 +50,13 @@ FLASHCARD_CONFIG = {
             'file_path': 'listen.html',
             'description': '听写模板，支持语音合成和听写功能'
         }
-        # 未来可以在这里添加更多模板
+        # 未来可以在这里添加更多模板 Support more template configuration;
     },
     
-    # 默认样式配置
+    # 可用的主题列表
+    'available_themes': ['light', 'dark', 'basic', 'advance', 'detail'],
+    
+    # 默认样式配置（统一默认参数）
     'default_style': {
         'theme': 'light',
         'colors': {
@@ -57,9 +65,26 @@ FLASHCARD_CONFIG = {
             'background': '#ffffff',
             'text': '#333333',
             'card_bg': '#ffffff',
+            'card_front_bg': '#ffffff',
+            'card_back_bg': '#f8f9fa',
             'card_border': '#dddddd'
         },
-        'font': 'Arial, sans-serif'
+        'font': 'Arial,  PingFang SC, Microsoft YaHei,  sans-serif',
+        # 统一控制与限制
+        'compact_typography': True,
+        'show_title': False,
+        'show_card_index': False,
+        'show_tags': False,
+        'front_char_limit': 180,
+        'back_char_limit': 380,
+        # 卡片尺寸配置
+        'card_height': '105mm',
+        'card_width': '74.25mm',
+        # PDF 页码与叠加样式（新增默认值）
+        'show_page_number': True,
+        'deck_name_style': 'font-weight:600; font-size:14px;',
+        'card_index_style': 'position:absolute; top:6px; right:8px; font-size:12px;',
+        'page_number_style': 'font-size:12px; opacity:0.85;'
     },
     
     # 暗色主题默认配置
@@ -71,15 +96,57 @@ FLASHCARD_CONFIG = {
             'background': '#1a1a1a',
             'text': '#ffffff',
             'card_bg': '#2d2d2d',
-            'card_border': '#444444'
+            'card_border': '#444444',
+            'card_front_bg': '#2d2d2d',
+            'card_back_bg': '#2d2d2d'
         }
     },
-    
-    # 卡片尺寸配置
-    'card_dimensions': {
-        'height': 250,  # 像素
-        'min_width': 300  # 像素
-    }
+
+    # 基础主题配置 (basic)
+    'basic_theme_style': {
+        'theme': 'basic',
+        'colors': {
+            'primary': '#4caf50',
+            'secondary': '#81c784',
+            'background': '#f5f5f5',
+            'text': '#424242',
+            'card_bg': '#f0f0f0',
+            'card_border': '#cccccc',
+            'card_front_bg': '#f0f0f0',
+            'card_back_bg': '#f0f0f0'
+        }
+    },
+
+    # 进阶主题配置 (advance)
+    'advance_theme_style': {
+        'theme': 'advance',
+        'colors': {
+            'primary': '#ff9800',
+            'secondary': '#ffb74d',
+            'background': '#fffde7',
+            'text': '#5d4037',
+            'card_bg': '#fff8e1',
+            'card_border': '#bcaaa4',
+            'card_front_bg': '#fff8e1',
+            'card_back_bg': '#fff8e1'
+        }
+    },
+
+    # 详细主题配置 (detail)
+    'detail_theme_style': {
+        'theme': 'detail',
+        'colors': {
+            'primary': '#2196f3',
+            'secondary': '#64b5f6',
+            'background': '#e1f5fe',
+            'text': '#1976d2',
+            'card_bg': '#e3f2fd',
+            'card_border': '#90caf9',
+            'card_front_bg': '#e3f2fd',
+            'card_back_bg': '#e3f2fd'
+        }
+    },
+
 }
 
 # Markdown解析器配置
@@ -184,17 +251,18 @@ def ensure_directories():
     # 确保静态目录存在
     if not os.path.exists(STATIC_DIR):
         os.makedirs(STATIC_DIR)
+
+    # 确保输出目录存在
+    if not os.path.exists(OUTPUT_DIR):
+        os.makedirs(OUTPUT_DIR)
     
     # 确保模板目录存在
     if not os.path.exists(TEMPLATES_DIR):
         os.makedirs(TEMPLATES_DIR)
 
 # 在导入时确保目录存在
-try:
-    ensure_directories()
-except Exception as e:
-    print(f"警告: 创建必要目录时出错: {str(e)}")
-    print("程序将继续运行，但某些功能可能受到影响")
+ensure_directories()
+
 
 # 根据环境变量加载不同配置
 def load_env_config(env='development'):
@@ -235,6 +303,7 @@ __all__ = [
     'PROJECT_ROOT',
     'TEMPLATES_DIR',
     'STATIC_DIR',
+    'OUTPUT_DIR',
     'SERVER_CONFIG',
     'FLASHCARD_CONFIG',
     'MARKDOWN_CONFIG',

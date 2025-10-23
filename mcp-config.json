@@ -3,12 +3,10 @@
     "FlashcardGenerator": {
       "command": "uv",
       "args": [
+        "--directory",
+        "/Users/yinlei/Programming/showRoom/FlaskCardMCP/",
         "run",
-        "--with",
-        "fastmcp",
-        "fastmcp",
-        "run",
-        "/Users/yinlei/Programming/showRoom/FlaskCardMCP/server.py"
+        "server.py"
       ]
     }
   }

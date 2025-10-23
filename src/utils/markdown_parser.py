@@ -20,7 +20,8 @@ class MarkdownParser:
             self.extensions = [
                 'fenced_code',  # 支持 fenced code blocks
                 'tables',       # 支持表格
-                'admonition'    # 提示框支持（默认不启用 toc / codehilite）
+                'codehilite',   # 代码高亮
+                'admonition'    # 提示框支持
             ]
         else:
             self.extensions = extensions
@@ -68,8 +69,16 @@ class MarkdownParser:
         try:
             # 重置解析器状态
             self.md.reset()
+            # 支持删除线 ~~text~~ -> <del>text</del>
+            markdown_text = re.sub(r'(?<!`)~~([^~\n]+)~~(?<!`)', r'<del>\1</del>', markdown_text)
             # 转换 Markdown 到 HTML
             html = self.md.convert(markdown_text)
+
+            # 解除 <code> 包裹的数学表达式，确保 MathJax 能够渲染
+            # 支持 $...$、$$...$$、\(...\)、\[...\]
+            html = re.sub(r'<code>\s*(\${1,2}[^<]*\${1,2})\s*</code>', r'\1', html)
+            html = re.sub(r'<code>\s*(\\\([^<]*\\\))\s*</code>', r'\1', html)
+            html = re.sub(r'<code>\s*(\\\[[^<]*\\\])\s*</code>', r'\1', html)
 
             # 如果启用了 toc 扩展，则将标题注入到生成的 HTML 前部
             if 'toc' in self.extensions:
@@ -134,7 +143,7 @@ class MarkdownParser:
         
         # 提取元数据
         metadata = {
-            'toc': self.md.toc if hasattr(self.md, 'toc') else '',
+            'toc': getattr(self.md, 'toc', ''),
             'html': html
         }
         
@@ -202,7 +211,5 @@ def create_custom_parser(extensions: Optional[list] = None, extension_configs: O
     Returns:
         MarkdownParser: A configured MarkdownParser instance.
     """
-    parser = MarkdownParser(extensions)
-    if configs:
-        parser.set_extension_configs(configs)
+    parser = MarkdownParser(extensions, extension_configs)
     return parser

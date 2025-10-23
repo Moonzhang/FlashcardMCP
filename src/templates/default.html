@@ -1,0 +1,181 @@
+{% extends "minimal.html" %}
+
+{% block page_styles %}
+<style>
+    /* Styles for default.html layout */
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    
+    header h1 {
+        color: var(--primary-color);
+        margin-bottom: 10px;
+        font-size: 2.5em;
+    }
+    
+    header p {
+        font-size: 1.1em;
+        opacity: 0.8;
+    }
+    
+    /* 重写基础模板的卡片显示逻辑，实现流式布局 */
+    .flashcard-grid {
+        display: flex !important;
+        flex-wrap: wrap;
+        gap: 20px;
+        justify-content: center;
+        align-items: flex-start;
+    }
+    
+    .card {
+        flex: 0 0 auto;
+        margin: 0 !important;
+        display: block !important; /* 覆盖基础模板的 display: none */
+    }
+    
+    /* 移除单卡片模式的 active 状态控制 */
+    .card.active {
+        display: block !important;
+    }
+    
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+        .container {
+            padding: 10px;
+        }
+        
+        .flashcard-grid {
+            gap: 15px;
+        }
+        
+        .card {
+            width: calc(50% - 7.5px);
+            min-width: 200px;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .flashcard-grid {
+            gap: 10px;
+        }
+        
+        .card {
+            width: 100%;
+            min-width: auto;
+        }
+    }
+    
+    @media print {
+        body { padding: 0; }
+        .flashcard-grid {
+            display: grid !important;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+        .card { break-inside: avoid; page-break-inside: avoid; }
+        .card-inner { transform: none !important; box-shadow: none; }
+        .card-front, .card-back { position: relative; border: 1px solid #000; }
+        .card-back { border: 2px solid #000; }
+    }
+</style>
+{% endblock %}
+
+{% block body_content %}
+<div class="container">
+    <header>
+        <h1>{{ title }}</h1>
+        <p>{{ description }}</p>
+    </header>
+    <div class="flashcard-grid">
+        {% for card in cards %}
+        <div class="card {{ theme_class }} {% if compact_typography %}compact{% endif %}" id="{{ card.id }}" data-tags="{{ card.tags|join(',') }}">
+            <div class="card-inner">
+                <div class="card-front">
+                    {% if show_deck_name %}<div class="deck-name" style="{{ deck_name_style }}">{{ title }}</div>{% endif %}
+                    {% if show_card_index %}<div class="card-index" style="{{ card_index_style }}">{{ loop.index }}/{{ cards|length }}</div>{% endif %}
+                    <div class="card-content">
+                        {{ card.front|safe }}
+                    </div>
+                    {% if card.tags %}
+                    <div class="card-tags">
+                        {% for tag in card.tags %}
+                        <span class="card-tag">{{ tag }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-back">
+                    {% if show_card_index %}<div class="card-index" style="{{ card_index_style }}">{{ loop.index }}/{{ cards|length }}</div>{% endif %}
+                    <div class="card-content">
+                        {{ card.back|safe }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    // 重写基础模板的 JavaScript，适配流式布局
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = Array.from(document.querySelectorAll('.card'));
+        
+        // 显示所有卡片（流式布局）
+        cards.forEach(card => {
+            card.classList.add('active'); // 确保所有卡片都显示
+        });
+        
+        // 保留卡片翻转功能
+        cards.forEach(card => {
+            card.addEventListener('click', () => {
+                card.classList.toggle('flipped');
+            });
+        });
+        
+        // 移除键盘导航（不适用于流式布局）
+        // 如果需要，可以添加其他交互功能，比如全部翻转、重置等
+        
+        // 可选：添加全局控制按钮
+        const container = document.querySelector('.container');
+        if (container && cards.length > 0) {
+            const controlPanel = document.createElement('div');
+            controlPanel.style.cssText = 'text-align: center; margin-bottom: 20px;';
+            
+            const flipAllBtn = document.createElement('button');
+            flipAllBtn.textContent = '全部翻转';
+            flipAllBtn.style.cssText = 'margin: 0 10px; padding: 8px 16px; background: var(--primary-color); color: white; border: none; border-radius: 4px; cursor: pointer;';
+            flipAllBtn.addEventListener('click', () => {
+                cards.forEach(card => card.classList.toggle('flipped'));
+            });
+            
+            const resetBtn = document.createElement('button');
+            resetBtn.textContent = '重置';
+            resetBtn.style.cssText = 'margin: 0 10px; padding: 8px 16px; background: var(--secondary-color); color: white; border: none; border-radius: 4px; cursor: pointer;';
+            resetBtn.addEventListener('click', () => {
+                cards.forEach(card => card.classList.remove('flipped'));
+            });
+            
+            controlPanel.appendChild(flipAllBtn);
+            controlPanel.appendChild(resetBtn);
+            
+            const header = container.querySelector('header');
+            if (header) {
+                header.appendChild(controlPanel);
+            } else {
+                container.insertBefore(controlPanel, container.firstChild);
+            }
+        }
+    });
+</script>
+{% endblock %}

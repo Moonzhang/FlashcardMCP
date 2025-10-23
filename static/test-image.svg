@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.9" />
+      <stop offset="100%" style="stop-color:#f8f9ff;stop-opacity:0.9" />
+    </linearGradient>
+  </defs>
+  
+  <!-- 背景 -->
+  <rect width="400" height="300" fill="url(#bg)"/>
+  
+  <!-- 装饰性几何图形 -->
+  <circle cx="80" cy="80" r="30" fill="rgba(255,255,255,0.2)" opacity="0.6"/>
+  <circle cx="320" cy="220" r="25" fill="rgba(255,255,255,0.15)" opacity="0.5"/>
+  <rect x="300" y="50" width="40" height="40" rx="8" fill="rgba(255,255,255,0.1)" opacity="0.4"/>
+  
+  <!-- 主要卡片图形 -->
+  <rect x="100" y="75" width="200" height="150" rx="15" fill="url(#cardGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
+  
+  <!-- 卡片内容模拟 -->
+  <rect x="120" y="95" width="160" height="8" rx="4" fill="rgba(102,126,234,0.6)"/>
+  <rect x="120" y="115" width="120" height="6" rx="3" fill="rgba(102,126,234,0.4)"/>
+  <rect x="120" y="130" width="140" height="6" rx="3" fill="rgba(102,126,234,0.4)"/>
+  
+  <!-- 图标元素 -->
+  <circle cx="200" cy="170" r="20" fill="rgba(102,126,234,0.3)"/>
+  <path d="M190 170 L195 175 L210 160" stroke="rgba(102,126,234,0.8)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- 标题文字 -->
+  <text x="200" y="260" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white">测试图片</text>
+  <text x="200" y="280" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="rgba(255,255,255,0.8)">FlashCard Test Image</text>
+</svg>

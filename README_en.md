@@ -84,8 +84,8 @@ The server exposes the following tools and resources through the MCP protocol:
      - `cards`: List of flashcard data with 'front', 'back', and optional 'tags'
      - `title`: Title for the flashcard set
      - `description`: Description of the flashcard set
-     - `template`: Template type ('minimal', 'default', 'elegant')
-     - `theme`: Theme ('light' or 'dark')
+     - `template`: Template type ('minimal', 'default', 'listen')
+     - `theme`: Theme ('light', 'dark', 'basic', 'advance', 'detail')
    - **Returns**: Generated HTML content as string
 
 2. **generate_flashcards_pdf**
@@ -128,7 +128,7 @@ The server exposes the following tools and resources through the MCP protocol:
 The project provides three different flashcard templates, each with unique features and use cases:
 
 #### 1. Default Template
-- **File**: `card_template.html`
+- **File**: `default.html`
 - **Layout**: Fluid grid layout displaying 2 cards per row
 - **Features**:
   - Responsive design for different screen sizes
@@ -195,7 +195,7 @@ To use FlashCardMCP, provide JSON data in the following format:
     // More cards...
   ],
   "style": {
-    "theme": "light", // Options: light, dark, custom
+    "theme": "light", // Options: light, dark, basic, advance, detail
     "font": "Arial, sans-serif",
     "colors": {
       "primary": "#007bff",

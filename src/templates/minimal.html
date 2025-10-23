@@ -14,14 +14,14 @@
             --text-color: {{ text_color | default('#333') }};
             --card-front-bg: {{ card_front_bg | default('white') }};
             --card-back-bg: {{ card_back_bg | default('#fdfdfd') }};
-            --card-border: {{ card_border | default('1px solid #ddd') }};
+            --card-border: {{ card_border if card_border else '#ddd' }};
             --card-border-radius: {{ card_border_radius | default('8px') }};
             --card-padding: {{ card_padding | default('20px') }};
             --card-box-shadow: {{ card_box_shadow | default('0 4px 8px rgba(0,0,0,0.1)') }};
             --font-family: {{ font_family | default("'PingFang SC', 'Microsoft YaHei', sans-serif") }};
             --font-css: {{ font_css | default('') }};
-            --card-front-font: {{ card_front_font | default("normal 400 1.2em/1.5 var(--font-family)") }};
-            --card-back-font: {{ card_back_font | default("normal 400 1em/1.6 var(--font-family)") }};
+            --card-front-font: {{ card_front_font | default("normal 500 1.05em/1.35 var(--font-family)") }};
+            --card-back-font: {{ card_back_font | default("normal 400 0.95em/1.5 var(--font-family)") }};
         }
 
         /* Basic Resets */
@@ -29,16 +29,18 @@
         body { font-family: var(--font-family); background: var(--background-color); color: var(--text-color); padding: 16px; }
 
         /* SHARED CARD STYLES */
-        .card { width: 74.25mm; height: 105mm; perspective: 1000px; cursor: pointer; position: relative; }
+        .card { width: {{ card_width | default('74.25mm') }}; height: {{ card_height | default('105mm') }}; perspective: 1000px; cursor: pointer; position: relative; }
         .card.flipped .card-inner { transform: rotateY(180deg); }
         .card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; border-radius: var(--card-border-radius); box-shadow: var(--card-box-shadow); }
 
         .card-front, .card-back {
             position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden;
-            padding: var(--card-padding); border: var(--card-border); border-radius: var(--card-border-radius); display: flex; flex-direction: column; justify-content: center; align-items: center;
+            padding: var(--card-padding); border: 1px solid var(--card-border); border-radius: var(--card-border-radius); display: flex; flex-direction: column; justify-content: center; align-items: center;
         }
         .card-front { background: var(--card-front-bg); font: var(--card-front-font); }
         .card-back { transform: rotateY(180deg); background: var(--card-back-bg); font: var(--card-back-font); }
+        .card.compact .card-front, .card.compact .card-back { padding: calc((var(--card-padding)) - 6px); }
+        .card.compact .card-content { gap: 4px; }
 
         .deck-name { position: absolute; top: 8px; left: 8px; font-size: 0.75em; font-weight: 500; color: var(--text-color); opacity: 0.7; pointer-events: none; z-index: 10; }
         .card-index { position: absolute; bottom: 8px; right: 8px; font-size: 0.7em; font-weight: 500; color: var(--text-color); opacity: 0.6; pointer-events: none; z-index: 10; }
@@ -51,13 +53,65 @@
         .card-content ul { list-style-type: disc; list-style-position: outside; padding-left: 1.25em; margin-left: 0.25em; }
         .card-content ol { list-style-type: decimal; list-style-position: outside; padding-left: 1.25em; margin-left: 0.25em; }
         .card-content li { margin: 3px 0; }
-        .card-content table { width: 100%; border-collapse: collapse; margin-top: 4px; }
-        .card-content th, .card-content td { border: 1px solid var(--card-border); padding: 6px 8px; text-align: left; }
+        .card-content table { width: 100%; border-collapse: collapse; border: 1px solid #9aa !important; margin-top: 4px; }
+        .card-content th, .card-content td { border: 1px solid #9aa !important; padding: 6px 8px; text-align: left; }
         .card-content thead th { background: rgba(0,0,0,0.06); }
         .card-front .card-content:has(> img:only-child),
         .card-front .card-content:has(> p:only-child > img:only-child) { padding: 0; width: 100%; height: 100%; }
         .card-front .card-content img:only-child,
         .card-front .card-content p:only-child > img:only-child { width: 100%; height: 100%; max-height: 100%; object-fit: cover; margin: 0; }
+
+        /* Code blocks */
+        .card-content pre, .card-content code { font-family: SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; }
+        .card-content pre { background: #f6f8fa; border: 1px solid #e1e4e8; border-radius: 6px; padding: 10px 12px; text-align: left; white-space: pre; overflow: auto; max-height: 70%; width: 100%; box-sizing: border-box; }
+        .card-content code { background: none; padding: 0; border-radius: 0; }
+        .highlight pre, .codehilite pre { background: #f6f8fa; }
+
+        /* MathJax 公式换行样式 */
+        .card-content mjx-container {
+            max-width: 100% !important;
+            width: 100% !important;
+            overflow: visible !important;
+            display: block !important;
+            word-wrap: break-word !important;
+            overflow-wrap: break-word !important;
+        }
+        
+        .card-content mjx-container[display="true"] {
+            max-width: 100% !important;
+            width: 100% !important;
+            overflow: visible !important;
+            text-align: center !important;
+            word-wrap: break-word !important;
+            overflow-wrap: break-word !important;
+        }
+        
+        .card-content mjx-math {
+            max-width: 100% !important;
+            width: auto !important;
+            font-size: 0.8em !important;
+            line-height: 1.2 !important;
+            word-wrap: break-word !important;
+            overflow-wrap: break-word !important;
+        }
+        
+        .card-content mjx-assistive-mml {
+            display: none !important;
+        }
+        
+        /* MathJax 样式 - 保持与常规文字相同的字体大小 */
+        .card-content .MathJax {
+            max-width: 100% !important;
+        }
+        
+        .card-content mjx-container {
+            max-width: 100% !important;
+        }
+
+        /* Image-only front: remove border and shadow for full-bleed image */
+        .card.image-only .card-front { padding: 0; border: none; background: transparent; }
+        .card.image-only .card-front .card-content { padding: 0; width: 100%; height: 100%; }
+        .card.image-only .card-front .card-content img { width: 100%; height: 100%; max-height: 100%; object-fit: cover; margin: 0; }
         .card-tags, .card-tag { display: none !important; }
     </style>
     {% block page_styles %}
@@ -86,15 +140,15 @@
     <div class="container">
         <div class="flashcard-grid" id="cardGrid">
         {% for card in cards %}
-        <div class="card" id="{{ card.id }}" data-tags="{{ card.tags|join(',') }}">
+        <div class="card {{ theme_class }} {% if compact_typography %}compact{% endif %} {% if loop.first %}active{% endif %}" id="{{ card.id }}" data-tags="{{ card.tags|join(',') }}">
             <div class="card-inner">
                 <div class="card-front">
-                    <div class="deck-name">{{ title }}</div>
-                    <div class="card-index">{{ loop.index }}/{{ cards|length }}</div>
+                    {% if show_deck_name %}<div class="deck-name" style="{{ deck_name_style }}">{{ title }}</div>{% endif %}
+                    {% if show_card_index %}<div class="card-index" style="{{ card_index_style }}">{{ loop.index }}/{{ cards|length }}</div>{% endif %}
                     <div class="card-content">
                         {{ card.front|safe }}
                     </div>
-                    {% if card.tags %}
+                    {% if card.tags and show_tags %}
                     <div class="card-tags">
                         {% for tag in card.tags %}
                         <span class="card-tag">{{ tag }}</span>
@@ -103,7 +157,7 @@
                     {% endif %}
                 </div>
                 <div class="card-back">
-                    <div class="card-index">{{ loop.index }}/{{ cards|length }}</div>
+                    {% if show_card_index %}<div class="card-index" style="{{ card_index_style }}">{{ loop.index }}/{{ cards|length }}</div>{% endif %}
                     <div class="card-content">
                         {{ card.back|safe }}
                     </div>
@@ -116,8 +170,106 @@
     
     {% block scripts %}
     <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    // MathJax 配置：支持 $...$ 和 $$...$$，并在 code 标签内渲染，启用自动换行
+    window.MathJax = {
+        tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$','$$'], ['\\[','\\]']],
+            processEscapes: true
+        },
+        options: {
+            // 移除对 <code> 的跳过，允许在代码片段中渲染公式
+            skipHtmlTags: ['script','noscript','style','textarea','pre']
+        },
+        "HTML-CSS": {
+            linebreaks: { 
+                automatic: true, 
+                width: "container" 
+            }
+        },
+        CommonHTML: {
+            linebreaks: { 
+                automatic: true, 
+                width: "container" 
+            }
+        },
+        SVG: {
+            linebreaks: { 
+                automatic: true, 
+                width: "container" 
+            }
+        },
+        svg: { fontCache: 'global' }
+    };
+    </script>
+    <script id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+    <script>
+    function truncateContentToCharLimit(container, limit) {
+        if (!limit || limit <= 0) return;
+        let count = 0;
+        const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+        const nodes = [];
+        while (walker.nextNode()) nodes.push(walker.currentNode);
+        for (let i = 0; i < nodes.length; i++) {
+            const node = nodes[i];
+            const text = node.nodeValue || '';
+            const remaining = limit - count;
+            if (remaining <= 0) {
+                node.nodeValue = '';
+                continue;
+            }
+            if (text.length > remaining) {
+                node.nodeValue = text.slice(0, remaining) + '…';
+                count = limit;
+                // 清空后续文本节点
+                for (let j = i + 1; j < nodes.length; j++) {
+                    nodes[j].nodeValue = '';
+                }
+                break;
+            } else {
+                count += text.length;
+            }
+        }
+    }
+    document.addEventListener('DOMContentLoaded', async () => {
+        // 先渲染数学公式（若 MathJax 尚未加载，则在 window.load 再次触发）
+        const triggerTypeset = () => {
+            try {
+                if (window.MathJax && MathJax.typesetPromise) {
+                    return MathJax.typesetPromise();
+                }
+            } catch (e) {}
+            return Promise.resolve();
+        };
+        await triggerTypeset();
+        window.addEventListener('load', () => {
+            try {
+                if (window.MathJax && MathJax.typeset) {
+                    MathJax.typeset();
+                }
+            } catch (e) {}
+        });
+
+        // 字符数限制（如果设置）
+        const frontLimit = {{ front_char_limit if front_char_limit else 'null' }};
+        const backLimit = {{ back_char_limit if back_char_limit else 'null' }};
+        if (frontLimit) {
+            document.querySelectorAll('.card-front .card-content').forEach(el => truncateContentToCharLimit(el, frontLimit));
+        }
+        if (backLimit) {
+            document.querySelectorAll('.card-back .card-content').forEach(el => truncateContentToCharLimit(el, backLimit));
+        }
+
         const cards = Array.from(document.querySelectorAll('.card'))
+        // Tag image-only cards to fill full front and remove borders/shadow
+        cards.forEach(card => {
+            const fc = card.querySelector('.card-front .card-content');
+            if (!fc) return;
+            const child = fc.children[0];
+            const onlyImg = fc.children.length === 1 && child && child.tagName && child.tagName.toLowerCase() === 'img';
+            const onlyPImg = fc.children.length === 1 && child && child.tagName && child.tagName.toLowerCase() === 'p' && child.children.length === 1 && child.children[0].tagName && child.children[0].tagName.toLowerCase() === 'img';
+            if (onlyImg || onlyPImg) card.classList.add('image-only');
+        });
         let currentCardIndex = 0
 
         // 显示指定索引的卡片

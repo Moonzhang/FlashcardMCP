@@ -8,7 +8,7 @@
 
 ## 中文
 
-一个基于 FastMCP 的 MCP 服务，用于将 JSON/CSV 格式的 Markdown 内容转换为交互式闪卡页面。
+一个基于 FastMCP 的 MCP 服务，用于将 JSON/CSV 格式的内容(支持Markdown语法)转换为交互式闪卡页面。
 
 ### 项目介绍
 
@@ -85,8 +85,8 @@ python server.py
      - `cards`：闪卡数据列表，包含'front'、'back'和可选的'tags'
      - `title`：闪卡集标题
      - `description`：闪卡集描述
-     - `template`：模板类型（'minimal'、'default'、'elegant'）
-     - `theme`：主题（'light'或'dark'）
+     - `template`：模板类型（'minimal'、'default'、'listen'）
+     - `theme`：主题（'light'、'dark'、'basic'、'advance'、'detail'）
    - **返回**：生成的HTML内容字符串
 
 2. **generate_flashcards_pdf**
@@ -124,8 +124,8 @@ python server.py
 
 项目提供三种不同的闪卡模板，每种模板都有其独特的功能和使用场景：
 
-#### 1. Default 模板（默认模板）
-- **文件**: `card_template.html`
+#### 1. Default 模板（展示模板）
+- **文件**: `default.html`
 - **布局**: 流式网格布局，每行显示2张卡片
 - **功能特性**:
   - 响应式设计，适配不同屏幕尺寸
@@ -188,7 +188,7 @@ python server.py
     // 更多卡片...
   ],
   "style": {
-    "theme": "light", // 可选值: light, dark, custom
+    "theme": "light", // 可选值: light, dark, basic, advance, detail
     "font": "Arial, sans-serif",
     "colors": {
       "primary": "#007bff",
@@ -218,7 +218,7 @@ python server.py
 #### Claude Desktop 配置
 
 要在 Claude Desktop 中使用此 MCP 服务器，请将以下配置添加到 Claude Desktop 配置文件中：
-
+请将路径替换为您的 FlashCardMCP 目录的实际路径。
 **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
 **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
 
@@ -228,24 +228,16 @@ python server.py
     "FlashcardGenerator": {
       "command": "uv",
       "args": [
+        "--directory",
+        "/path/to/FlashCardMCP",
         "run",
-        "--with",
-        "fastmcp",
-        "fastmcp",
-        "run",
-        "/Users/yinlei/Programming/showRoom/FlaskCardMCP/server.py"
+        "/server.py"
       ]
     }
   }
 }
 ```
 
-请将路径替换为您的 FlashCardMCP 目录的实际路径。
-      "cwd": "/path/to/FlashCardMCP"
-    }
-  }
-}
-```
 
 #### 可用的 MCP 工具
 
@@ -282,9 +274,10 @@ FlashCardMCP/
 │   │   ├── markdown_parser.py # Markdown 解析器
 │   │   └── csv_reader.py      # CSV 读取器
 │   └── templates/      # HTML 模板
-│       ├── card_template.html # 闪卡页面模板
+│       ├── default.html       # 默认展示模板
 │       ├── index.html         # 主页模板
-│       ├── minimal.html       # 简化模板
+│       ├── minimal.html       # 极简模板
+│       ├── listen.html        # 听写模板
 │       └── playwright_card_template.html # Playwright 模板
 ├── static/             # 静态文件目录
 └── README.md          # 项目说明

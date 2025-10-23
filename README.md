@@ -53,8 +53,8 @@ FlashCardMCP 是一个基于 FastMCP 的 MCP 服务，用于将 JSON/CSV 格式�
      - `cards`：闪卡数据列表，包含'front'、'back'和可选的'tags'
      - `title`：闪卡集标题
      - `description`：闪卡集描述
-     - `template`：模板类型（'minimal'、'default'、'elegant'）
-     - `theme`：主题（'light'或'dark'）
+     - `template`：模板类型（'minimal'、'default'、'listen'）
+     - `theme`：主题（'light'、'dark'、'basic'、'advance'、'detail'）
    - **返回**：生成的HTML内容字符串
 
 2. **generate_flashcards_pdf**
