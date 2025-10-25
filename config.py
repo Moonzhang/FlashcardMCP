@@ -72,7 +72,7 @@ FLASHCARD_CONFIG = {
         'font': 'Arial,  PingFang SC, Microsoft YaHei,  sans-serif',
         # 统一控制与限制
         'compact_typography': True,
-        'show_title': False,
+        'show_deck_name': False,
         'show_card_index': False,
         'show_tags': False,
         'front_char_limit': 180,
@@ -81,10 +81,8 @@ FLASHCARD_CONFIG = {
         'card_height': '105mm',
         'card_width': '74.25mm',
         # PDF 页码与叠加样式（新增默认值）
-        'show_page_number': True,
         'deck_name_style': 'font-weight:600; font-size:14px;',
         'card_index_style': 'position:absolute; top:6px; right:8px; font-size:12px;',
-        'page_number_style': 'font-size:12px; opacity:0.85;'
     },
     
     # 暗色主题默认配置

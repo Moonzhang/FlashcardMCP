@@ -70,14 +70,15 @@
         /* MathJax 公式换行样式 */
         .card-content mjx-container {
             max-width: 100% !important;
-            width: 100% !important;
             overflow: visible !important;
-            display: block !important;
+            display: inline-block !important;
+            vertical-align: middle;
             word-wrap: break-word !important;
             overflow-wrap: break-word !important;
         }
         
         .card-content mjx-container[display="true"] {
+            display: block !important;
             max-width: 100% !important;
             width: 100% !important;
             overflow: visible !important;
@@ -89,7 +90,7 @@
         .card-content mjx-math {
             max-width: 100% !important;
             width: auto !important;
-            font-size: 0.8em !important;
+            /* font-size: 0.8em !important; */
             line-height: 1.2 !important;
             word-wrap: break-word !important;
             overflow-wrap: break-word !important;
@@ -99,13 +100,19 @@
             display: none !important;
         }
         
-        /* MathJax 样式 - 保持与常规文字相同的字体大小 */
+        /* 强制MathJax使用较小字体以适应卡片宽度 */
         .card-content .MathJax {
+            /* font-size: 0.75em !important; */
             max-width: 100% !important;
+            word-wrap: break-word !important;
+            overflow-wrap: break-word !important;
         }
         
-        .card-content mjx-container {
-            max-width: 100% !important;
+        /* 强制所有MathJax元素支持换行 */
+        .card-content mjx-container * {
+            word-wrap: break-word !important;
+            overflow-wrap: break-word !important;
+            white-space: normal !important;
         }
 
         /* Image-only front: remove border and shadow for full-bleed image */

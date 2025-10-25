@@ -85,7 +85,7 @@ async def index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 @app.get("/preview")
-async def preview(request: Request, dataset: str = "all", template: str = "minimal", theme_param: Optional[str] = None, show_title: bool = True, show_card_index: bool = True):
+async def preview(request: Request, dataset: str = "all", template: str = "minimal", theme_param: Optional[str] = None, show_deck_name: bool = False, show_card_index: bool = False):
     """
     Preview flashcard page.
     Loads `tests/test_data.json`, merges datasets if needed, and renders HTML via `generate_flashcards` using the selected template.
@@ -98,7 +98,7 @@ async def preview(request: Request, dataset: str = "all", template: str = "minim
         HTMLResponse: Response containing the generated flashcard HTML content.
     """
     try:
-        logger.info(f"[preview] dataset={dataset}, template={template}, theme_param={theme_param}, show_title={show_title}, show_card_index={show_card_index}")
+        logger.info(f"[preview] dataset={dataset}, template={template}, theme_param={theme_param}, show_deck_name={show_deck_name}, show_card_index={show_card_index}")
         # 修复 __file__ 未定义的问题，使用当前工作目录
         project_root = os.path.abspath(os.path.join(os.getcwd()))
         sample_path = os.path.join(project_root, 'tests', 'test_data.json')
@@ -176,7 +176,7 @@ async def preview(request: Request, dataset: str = "all", template: str = "minim
                 merged_style['template'] = template_name
                 merged_style['theme'] = theme_param or merged_style.get('theme', 'light')
                 # 新增：允许通过查询参数控制标题和序号显示，默认开启
-                merged_style['show_title'] = merged_style.get('show_title', show_title)
+                merged_style['show_deck_name'] = merged_style.get('show_deck_name', show_deck_name)
                 merged_style['show_card_index'] = merged_style.get('show_card_index', show_card_index)
                 return {
                     "metadata": {
@@ -221,7 +221,7 @@ async def preview(request: Request, dataset: str = "all", template: str = "minim
         return HTMLResponse(status_code=500, content=f"<p>Preview generation failed: {e}</p>")
 
 @app.get("/preview_pdf")
-async def preview_pdf(layout: str = 'a4_8', show_title: bool = True, show_card_index: bool = True, show_page_number: bool = True):
+async def preview_pdf(layout: str = 'a4_8', show_deck_name: bool = False, show_card_index: bool = False ):
     """
     Exports the merged data from the preview page directly to a PDF and returns it as a download stream.
 
@@ -301,9 +301,8 @@ async def preview_pdf(layout: str = 'a4_8', show_title: bool = True, show_card_i
                 if 'theme' not in merged_style:
                     merged_style['theme'] = 'light'
                 # 新增：允许通过查询参数控制标题、序号与页码显示，默认开启
-                merged_style['show_title'] = merged_style.get('show_title', show_title)
+                merged_style['show_deck_name'] = merged_style.get('show_deck_name', show_deck_name)
                 merged_style['show_card_index'] = merged_style.get('show_card_index', show_card_index)
-                merged_style['show_page_number'] = merged_style.get('show_page_number', show_page_number)
                 return {
                     "metadata": {"title": title_for_deck, "description": description_for_deck},
                     "style": merged_style,

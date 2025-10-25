@@ -67,12 +67,10 @@ class Style(BaseModel):
     card_box_shadow: str = "0 2px 4px rgba(0,0,0,0.1)"
 
     # 显示控制 - 与config.py保持一致
-    show_title: bool = False
+    show_deck_name: bool = False
     show_card_index: bool = False
-    show_page_number: bool = False
     deck_name_style: str = ""
     card_index_style: str = ""
-    page_number_style: str = ""
 
     # 紧凑排版与字符数限制 - 与config.py保持一致
     compact_typography: bool = True

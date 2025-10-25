@@ -30,30 +30,16 @@ def get_flashcard_templates() -> str:
         JSON string containing template information
     """
     try:
+        # 从配置中动态获取模板信息
         templates = {
-            "minimal": {
-                "name": "Minimal Template",
-                "description": "Clean and simple design for focused learning",
-                "features": ["Card flipping", "Progress tracking", "Keyboard shortcuts"],
-                "best_for": ["Individual study", "Quick review", "Mobile devices"],
-                "theme_support": ["light", "dark"]
-            },
-            "default": {
-                "name": "Default Template", 
-                "description": "Full-featured template with all interactive elements",
-                "features": ["Card flipping", "Progress tracking", "Statistics", "Timer", "Shuffle mode"],
-                "best_for": ["Comprehensive study", "Teaching", "Group sessions"],
-                "theme_support": ["light", "dark"]
-            },
-            "elegant": {
-                "name": "Elegant Template",
-                "description": "Sophisticated design with enhanced visual appeal",
-                "features": ["Smooth animations", "Advanced styling", "Custom fonts"],
-                "best_for": ["Presentations", "Professional use", "Visual learners"],
-                "theme_support": ["light", "dark"]
+            name: {
+                "name": name.capitalize(),
+                "description": details.get("description", f"{name.capitalize()} template"),
             }
+            for name, details in FLASHCARD_CONFIG.get('available_templates', {}).items()
         }
         
+        # PDF布局目前是固定的，将来可以考虑也加入配置
         layouts = {
             "single": {
                 "name": "Single Card Layout",
@@ -71,11 +57,14 @@ def get_flashcard_templates() -> str:
             }
         }
         
+        # 从配置中动态获取主题信息
+        themes = FLASHCARD_CONFIG.get('available_themes', [])
+
         return json.dumps({
             "templates": templates,
             "layouts": layouts,
             "supported_formats": ["HTML", "PDF"],
-            "themes": ["light", "dark"]
+            "themes": themes
         }, ensure_ascii=False, indent=2)
         
     except Exception as e:
@@ -99,12 +88,27 @@ def flashcard_assistant(
     Args:
         user_input: User's input text describing their flashcard needs
         context: Context information (general, learning, teaching, sharing, printing)
-        data_type: Type of input data (csv, json, text, file_path, unknown)
-        output_preference: Preferred output format (html, pdf, json, auto)
+        data_type: Type of input data (csv, json)
+        output_preference: Preferred output format (html, pdf, auto)
     
     Returns:
         Complete analysis and recommendations for flashcard generation
     """
+    # 从配置动态生成模板和布局的帮助信息
+    templates_info = "\n".join(
+        [f"- **{name}**: {details.get('description', 'No description available.')}" for name, details in FLASHCARD_CONFIG.get('available_templates', {}).items()]
+    )
+    
+    # 布局信息保持静态
+    layouts_info = """- **single**: One flashcard per page for detailed view
+  - Best for: Teaching materials, large text content, detailed explanations
+  
+- **a4_8**: Eight flashcards per A4 page for efficient printing
+  - Best for: Bulk printing, study cards, portable learning"""
+
+    # 从配置动态生成主题的帮助信息
+    themes_info = ", ".join(FLASHCARD_CONFIG.get('available_themes', []))
+
     return f"""# Flashcard Generation Assistant
 
 ## User Request Analysis
@@ -116,27 +120,13 @@ def flashcard_assistant(
 ## Available Resources Query
 
 ### Templates Available:
-- **minimal**: Clean, focused design for learning and practice
-  - Features: Simple layout, essential functions, fast loading
-  - Best for: Personal study, exam review, mobile learning
-  - Themes: light, dark
-
-- **default**: Balanced design with comprehensive features
-  - Features: Complete functionality, good visual appeal, interactive elements
-  - Best for: General use, teaching materials, sharing
-  - Themes: light, dark
-
-- **elegant**: Sophisticated design with enhanced visual appeal
-  - Features: Smooth animations, advanced styling, custom fonts
-  - Best for: Presentations, professional use, visual learners
-  - Themes: light, dark
+{templates_info}
 
 ### PDF Layouts Available:
-- **single**: One flashcard per page for detailed view
-  - Best for: Teaching materials, large text content, detailed explanations
-  
-- **a4_8**: Eight flashcards per A4 page for efficient printing
-  - Best for: Bulk printing, study cards, portable learning
+{layouts_info}
+
+### Themes Available:
+- {themes_info}
 
 ## Intent Recognition & Analysis
 
@@ -152,28 +142,6 @@ def flashcard_assistant(
 
 4. **Data Validation**: Keywords like "validate", "check", "format", "error", "structure"
    → Recommended Tool: `validate_flashcard_data`
-
-### Context-Based Recommendations:
-
-#### For Learning Context:
-- **Template**: "minimal" - reduces distractions, focuses on content
-- **Theme**: "light" - suitable for extended study sessions
-- **Features**: Enable keyboard shortcuts, progress tracking
-
-#### For Teaching Context:
-- **Template**: "default" - comprehensive features for classroom use
-- **Dual Output**: HTML for demonstration + PDF for handouts
-- **Layout**: "single" for detailed explanations
-
-#### For Sharing Context:
-- **Template**: "default" or "elegant" - professional appearance
-- **Theme**: "light" - universal compatibility
-- **Format**: Responsive HTML for various devices
-
-#### For Printing Context:
-- **Format**: PDF with "a4_8" layout for efficiency
-- **Optimization**: High contrast, clear fonts
-- **Recommendation**: Double-sided printing for portability
 
 ## Tool Selection Strategy
 
@@ -192,79 +160,33 @@ def flashcard_assistant(
    Step 2: create_flashcards_from_json OR generate_flashcards_pdf
    ```
 
-3. **Complete Solution Workflow**:
-   ```
-   Step 1: Data preprocessing (CSV conversion if needed)
-   Step 2: Data validation
-   Step 3: HTML generation (for interactive use)
-   Step 4: PDF generation (for printing/sharing)
-   ```
-
 ## Parameter Configuration Guide
 
 ### Template Selection Logic:
-- **Learning/Practice** → "minimal" template
-- **Teaching/Presentation** → "default" or "elegant" template
-- **Professional Sharing** → "elegant" template
+- **Learning/Practice** → "minimal", "listen"
+- **Teaching/Presentation** → "default"
 
 ### Theme Selection Logic:
-- **Daytime Use** → "light" theme
-- **Evening Study** → "dark" theme
-- **Print Output** → "light" theme (better contrast)
+- **Daytime Use** → "light", "basic"
+- **Evening Study** → "dark"
+- **Print Output** → "light" (better contrast)
 
 ### Layout Selection Logic:
-- **Individual Study** → "single" layout
-- **Batch Learning** → "a4_8" layout
-- **Teaching Materials** → "single" layout
+- **Individual Study** → "single"
+- **Batch Learning** → "a4_8"
+- **Teaching Materials** → "single"
 
-## Specific Tool Call Recommendations
+## Markdown Content Guidelines
 
-Based on the analysis above, here are the recommended tool calls:
+When creating flashcard content using Markdown, please pay attention to the following to ensure correct rendering, especially in PDFs:
 
-### Primary Recommendation:
-[Tool selection based on detected intent and context]
-
-### Parameter Suggestions:
-- **Title**: [Auto-generated based on content or user specification]
-- **Description**: [Contextual description]
-- **Template/Layout**: [Based on context and output preference]
-- **Theme**: [Based on usage scenario]
-
-### Quality Assurance Steps:
-1. Always validate data structure before generation
-2. Test output on target devices/formats
-3. Verify accessibility and usability
-4. Provide optimization suggestions
-
-## Best Practices & Tips
-
-### For CSV Processing:
-- Ensure UTF-8 encoding
-- Verify column mapping (front_columns, back_columns)
-- Check for header row presence
-- Handle special characters properly
-
-### For HTML Generation:
-- Choose appropriate template for use case
-- Consider mobile responsiveness
-- Test interactive features
-- Optimize loading performance
-
-### For PDF Generation:
-- Select layout based on content volume
-- Ensure print-friendly formatting
-- Consider paper size and margins
-- Test print quality
-
-### General Recommendations:
-- Start with data validation
-- Use progressive enhancement approach
-- Provide multiple output formats when beneficial
-- Include metadata for better organization
+- **Escape Characters**: Special characters in Markdown (like `*`, `_`, `[`, `]`, `(`, `)`) should be escaped with a backslash (`\`) if you want them to appear as literal characters. For example, to display `*literal*`, you should write `\*literal\*`.
+- **Mathematical Formulas**: For mathematical formulas using LaTeX, ensure you are using the correct syntax that your rendering engine supports. For example, for block-level formulas, use `$$...$$`, and for inline formulas, use `$...$`. Make sure backslashes in LaTeX commands are properly escaped if necessary (e.g., `\frac` might need to be `\\frac` depending on the context).
 
 ---
 
-**Next Steps**: Based on this analysis, please proceed with the recommended tool calls using the suggested parameters. Feel free to adjust parameters based on specific requirements or constraints."""
+**Next Steps**: Based on this analysis, please proceed with the recommended tool calls using the suggested parameters.
+"""
 
 @mcp.tool
 def create_flashcards_from_json(
@@ -314,7 +236,9 @@ async def generate_flashcards_pdf(
     title: str = "My Flashcard Set",
     description: str = "PDF format flashcards",
     layout: str = "a4_8",
-    output_path: str = ""
+    output_path: str = "",
+    show_deck_name: bool = False,
+    show_card_index: bool = False
 ) -> str:
     """
     Generate PDF flashcards from JSON card data.
@@ -325,6 +249,8 @@ async def generate_flashcards_pdf(
         description: Description of the flashcard set
         layout: Layout type ('single' or 'a4_8')
         output_path: Directory path to save the PDF file
+        show_deck_name: Whether to show the title on the PDF
+        show_card_index: Whether to show the card index on the PDF
     
     Returns:
         Success message with file path and size information
@@ -341,7 +267,9 @@ async def generate_flashcards_pdf(
             },
             "style": {
                 "template": "minimal",
-                "theme": "light"
+                "theme": "light",
+                "show_deck_name": show_deck_name,
+                "show_card_index": show_card_index,
             },
             "cards": cards
         }

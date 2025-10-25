@@ -33,6 +33,8 @@ Thumbs.db
 .coverage
 coverage.xml
 htmlcov/
+test_output/
+
 
 # 构建相关
 build/

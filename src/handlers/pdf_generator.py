@@ -157,13 +157,13 @@ async def generate_flashcards_pdf_async(
     # 新增：将关键样式键回退到默认值，保证模板中的 style.* 可用
     if 'colors' not in style_params:
         style_params['colors'] = {}
-    style_params.setdefault('show_title', default_style.get('show_title', False))
-    style_params.setdefault('show_page_number', default_style.get('show_page_number', True))
+    
+    # 修正：优先使用传入的样式，如果未提供，则回退到默认值
+    style_params['show_deck_name'] = style_params.get('show_deck_name', default_style.get('show_deck_name', False))
+    style_params['show_card_index'] = style_params.get('show_card_index', default_style.get('show_card_index', True))
+
     style_params.setdefault('deck_name_style', default_style.get('deck_name_style', ''))
     style_params.setdefault('card_index_style', default_style.get('card_index_style', ''))
-    style_params.setdefault('page_number_style', default_style.get('page_number_style', ''))
-    # 让 style.layout 与函数入参保持一致（HTML 预览忽略该键，PDF 使用）
-    style_params.setdefault('layout', layout)
 
     # 主题与颜色
     theme = style_params.get('theme', default_style.get('theme', 'light'))
@@ -200,9 +200,9 @@ async def generate_flashcards_pdf_async(
     card_front_font = style_params.get('card_front_font')
     card_back_font = style_params.get('card_back_font')
 
-    # 显示控制与字数限制
+    # 新增：显示控制 & 紧凑排版 & 字数限制（统一回退到 config 默认）
     compact_typography = bool(style_params.get('compact_typography', default_style.get('compact_typography', True)))
-    show_deck_name = bool(style_params.get('show_title', default_style.get('show_title', False)))
+    show_deck_name = bool(style_params.get('show_deck_name', default_style.get('show_deck_name', False)))
     show_card_index = bool(style_params.get('show_card_index', default_style.get('show_card_index', False)))
     show_tags = bool(style_params.get('show_tags', default_style.get('show_tags', True)))
     deck_name_style = style_params.get('deck_name_style', '')
@@ -253,6 +253,11 @@ async def generate_flashcards_pdf_async(
         'style': style_params
     }
     
+    # 调试：打印最终的样式参数
+    print("--- DEBUG: Final Style Parameters for Template ---")
+    print(style_params)
+    print("-------------------------------------------------")
+
     # 渲染HTML（继承 minimal.html，因此会复用相同的变量与样式）
     html_content = template.render(**context)
     
@@ -310,18 +315,34 @@ async def generate_flashcards_pdf_async(
         ''')
         
         # 根据布局设置PDF选项
-        pdf_options = {
-            "format": "A4",
-            "print_background": True,
-            "margin": {"top": "0", "bottom": "0", "left": "0", "right": "0"}
-        }
-        
         if layout == "single":
-            # 单页布局：每页一张卡片，竖版
-            pdf_options["landscape"] = False
+            card_width_str = style_params.get('card_width', '85mm')
+            card_height_str = style_params.get('card_height', '55mm')
+
+            # 提取数值和单位
+            width_val = float(re.findall(r"[\d\.]+", card_width_str)[0])
+            height_val = float(re.findall(r"[\d\.]+", card_height_str)[0])
+
+            pdf_options = {
+                "width": card_width_str,
+                "height": card_height_str,
+                "margin": {"top": "0", "right": "0", "bottom": "0", "left": "0"},
+                "print_background": True,
+                "landscape": width_val > height_val
+            }
         elif layout == "a4_8":
-            # 8卡片布局：A4页面8张卡片，横版，与模板CSS一致
-            pdf_options["landscape"] = True
+            pdf_options = {
+                "format": "A4",
+                "landscape": True,
+                "margin": {"top": "10mm", "right": "10mm", "bottom": "10mm", "left": "10mm"},
+                "print_background": True,
+            }
+        else:
+            pdf_options = {
+                "format": "A4",
+                "print_background": True,
+                "margin": {"top": "0", "bottom": "0", "left": "0", "right": "0"}
+            }
         
         # 生成PDF
         pdf_bytes = await page.pdf(**pdf_options)

@@ -155,7 +155,7 @@ def render_flashcard_template(title, description, cards, template='minimal', sty
     theme = style_params.get('theme', default_style.get('theme', 'light'))
     colors = style_params.get('colors', {})
     # 新增：显示控制 & 紧凑排版 & 字数限制（统一回退到 config 默认）
-    show_deck_name = bool(style_params.get('show_title', default_style.get('show_title', False)))
+    show_deck_name = bool(style_params.get('show_deck_name', default_style.get('show_deck_name', False)))
     show_card_index = bool(style_params.get('show_card_index', default_style.get('show_card_index', False)))
     show_tags = bool(style_params.get('show_tags', default_style.get('show_tags', True)))
     deck_name_style = style_params.get('deck_name_style', '')

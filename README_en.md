@@ -235,12 +235,10 @@ To use this MCP server with Claude Desktop, add the following configuration to y
     "FlashcardGenerator": {
       "command": "uv",
       "args": [
+        "--directory",
+        "/path/to/FlashCardMCP",
         "run",
-        "--with",
-        "fastmcp",
-        "fastmcp",
-        "run",
-        "/Users/yinlei/Programming/showRoom/FlaskCardMCP/server.py"
+        "/server.py"
       ]
     }
   }

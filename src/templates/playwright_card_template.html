@@ -34,33 +34,82 @@
     }
 
     /* 页眉与页脚叠加信息（标题与页码） */
-    .page-title {
+    .deck-name {
         position: absolute;
-        top: 8mm;
-        left: 10mm;
-        opacity: 0.8;
+        top: 8px;
+        left: 8px;
+        font-size: 0.75em;
+        font-weight: 500;
         color: var(--text-color);
+        opacity: 0.7;
+        pointer-events: none;
+        z-index: 10;
     }
-    .page-number {
+    .card-index {
         position: absolute;
-        bottom: 8mm;
-        right: 10mm;
-        opacity: 0.8;
+        bottom: 8px;
+        right: 8px;
+        font-size: 0.7em;
+        font-weight: 500;
         color: var(--text-color);
+        opacity: 0.6;
+        pointer-events: none;
+        z-index: 10;
+    }
+
+    /* 背面翻转样式 */
+    .card-back {
+        transform: none;
+    }
+
+    /* 背面的标题和序号需要额外翻转来保持正常显示 */
+    .card-back .deck-name,
+    .card-back .card-index {
+        transform: none;
+    }
+
+    @media print {
+        .page.single {
+            display: inline-block;
+            width: var(--card-width, 105mm);
+            height: var(--card-height, 74.25mm);
+            overflow: hidden;
+        }
+
+        /* @page 规则已移除，由 Playwright 直接控制页面尺寸 */
+        body {
+            margin: 0;
+            padding: 0;
+        }
+        .page {
+            margin: 0;
+            padding: 0;
+            page-break-after: always;
+        }
+        .page:last-child {
+            page-break-after: avoid;
+        }
     }
 
     /* 单页布局 - 充满整页 */
-        .single-layout { width: 100%; height: 100%; }
-        .single-layout .card {
-            width: 100%;
-            height: 100%;
-            margin: 0;
-            border: var(--card-border);
-        }
-        /* 让单页图片尽量利用空间 */
-        .single-layout .card .card-content img { max-height: 95%; }
-        /* PDF 中不需要背面旋转 */
-        .single-layout .card .card-back { transform: none; }
+    .single-layout { 
+        width: 100%; 
+        height: 100%; 
+    }
+    .single-layout .card {
+        width: inherit; /* 继承父级 .page.single 的宽度 */
+        height: inherit; /* 继承父级 .page.single 的高度 */
+        margin: 0;
+        border: var(--card-border);
+    }
+    /* 让单页图片尽量利用空间 */
+    .single-layout .card .card-content img { 
+        max-height: 95%; 
+    }
+    /* PDF 中单页布局不需要背面旋转 */
+    .single-layout .card .card-back { 
+        transform: none; 
+    }
 
     /* A4八卡片布局 - 精确轨道尺寸，卡片填充网格单元 */
     .a4-8-layout {
@@ -140,7 +189,12 @@
     .a4-8-layout .card .card-back {
         background: var(--card-back-bg);
         font: var(--card-back-font);
-        transform: scaleX(-1); /* PDF 中不需要旋转 */
+        transform: scaleX(-1); /* PDF 横向翻转 */
+    }
+
+    .a4-8-layout .card-back .deck-name,
+    .a4-8-layout .card-back .card-index {
+        transform: scaleX(-1);
     }
 
     /* 主题背景区分 - 为不同主题的反面添加边框和颜色区分 */
@@ -170,6 +224,13 @@
         border: 2px solid #32cd32;
     }
 
+    .page.single {
+        display: inline-block;
+        width: var(--card-width, 85mm);
+        height: var(--card-height, 55mm);
+        overflow: hidden;
+    }
+
     @media print {
         @page {
             margin: 0;
@@ -195,8 +256,8 @@
 {% if layout == 'single' %}
     {% for card in cards %}
     <div class="page">
-        {% if style.show_title %}<div class="page-title" style="{{ style.deck_name_style }}">{{ title }}</div>{% endif %}
-        {% if style.show_page_number %}<div class="page-number" style="{{ style.page_number_style }}">{{ 2 * loop.index0 + 1 }}/{{ 2 * (cards | length) }}</div>{% endif %}
+        {% if style.show_deck_name %}<div class="deck-name" style="{{ style.deck_name_style }}">{{ title }}</div>{% endif %}
+        {% if style.show_card_index %}<div class="card-index" style="{{ style.card_index_style }}"> {{ loop.index }}</div>{% endif %}
         <div class="single-layout">
             <div class="card">
                 <div class="card-front">
@@ -206,11 +267,11 @@
         </div>
     </div>
     <div class="page">
-        {% if style.show_title %}<div class="page-title" style="{{ style.deck_name_style }}">{{ title }}</div>{% endif %}
-        {% if style.show_page_number %}<div class="page-number" style="{{ style.page_number_style }}">{{ 2 * loop.index0 + 2 }}/{{ 2 * (cards | length) }}</div>{% endif %}
         <div class="single-layout">
             <div class="card">
                 <div class="card-back">
+                    {% if style.show_deck_name %}<div class="deck-name" style="{{ style.deck_name_style }}">{{ title }}</div>{% endif %}
+                    {% if style.show_card_index %}<div class="card-index" style="{{ style.card_index_style }}"> {{ loop.index }}</div>{% endif %}
                     <div class="card-content">{{ card.back | safe }}</div>
                 </div>
             </div>
@@ -224,11 +285,11 @@
     {% for page_start in range(0, cards | length, cards_per_page) %}
     {% set page_cards = cards[page_start:page_start + cards_per_page] %}
     <div class="page landscape">
-        {% if style.show_title %}<div class="page-title" style="{{ style.deck_name_style }}">{{ title }}</div>{% endif %}
-        {% if style.show_page_number %}<div class="page-number" style="{{ style.page_number_style }}">{{ 2 * loop.index - 1 }}/{{ pages_count }}</div>{% endif %}
         <div class="a4-8-layout">
             {% for card in page_cards %}
             <div class="card">
+                {% if style.show_deck_name %}<div class="deck-name" style="{{ style.deck_name_style }}">{{ title }}</div>{% endif %}
+                {% if style.show_card_index %}<div class="card-index" style="{{ style.card_index_style }}"> {{ page_start + loop.index }}</div>{% endif %}
                 <div class="card-side card-front">
                     <div class="card-content">{{ card.front | safe }}</div>
                 </div>
@@ -237,12 +298,10 @@
         </div>
     </div>
     <div class="page landscape">
-        {% if style.show_title %}<div class="page-title" style="{{ style.deck_name_style }}">{{ title }}</div>{% endif %}
-        {% if style.show_page_number %}<div class="page-number" style="{{ style.page_number_style }}">{{ 2 * loop.index }}/{{ pages_count }}</div>{% endif %}
         <div class="a4-8-layout back-page">
             {% for card in page_cards %}
             <div class="card">
-                <div class="card-side card-back">
+                <div class="card-back">
                     <div class="card-content">{{ card.back | safe }}</div>
                 </div>
             </div>
